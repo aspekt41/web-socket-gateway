@@ -13,10 +13,9 @@ import io.netty.channel.EventLoopGroup;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioSocketChannel;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.util.concurrent.TimeUnit;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
@@ -38,7 +37,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
  */
 public class TcpClient implements AutoCloseable {
 
-    private static final Logger log = LoggerFactory.getLogger(TcpClient.class);
+    private static final Logger log = Logger.getLogger(TcpClient.class.getName());
 
     private final String bridgeName;
     private final TcpClientConfig config;
@@ -83,7 +82,7 @@ public class TcpClient implements AutoCloseable {
     @Override
     public void stop() {
         if (stopped.compareAndSet(false, true)) {
-            log.info("[{}] Stopping TCP client", bridgeName);
+            log.info("[" + bridgeName + "] Stopping TCP client");
             if (channel != null) {
                 channel.close();
             }
@@ -114,8 +113,8 @@ public class TcpClient implements AutoCloseable {
             return;
         }
         long delaySeconds = config.getReconnectDelaySeconds();
-        log.info("[{}] Reconnecting to {}:{} in {}s",
-                bridgeName, config.getHost(), config.getPort(), delaySeconds);
+        log.info("[" + bridgeName + "] Reconnecting to "
+                + config.getHost() + ":" + config.getPort() + " in " + delaySeconds + "s");
         eventLoop.schedule(this::connect, delaySeconds, TimeUnit.SECONDS);
     }
 
@@ -127,21 +126,19 @@ public class TcpClient implements AutoCloseable {
         if (stopped.get()) {
             return;
         }
-        log.info("[{}] Connecting to {}:{}", bridgeName, config.getHost(), config.getPort());
+        log.info("[" + bridgeName + "] Connecting to " + config.getHost() + ":" + config.getPort());
 
         bootstrap.connect(config.getHost(), config.getPort())
                 .addListener((ChannelFutureListener) future -> {
                     if (future.isSuccess()) {
                         channel = future.channel();
-                        log.info("[{}] Connected to {}:{}",
-                                bridgeName, config.getHost(), config.getPort());
+                        log.info("[" + bridgeName + "] Connected to "
+                                + config.getHost() + ":" + config.getPort());
                     } else {
-                        log.warn("[{}] Connection to {}:{} failed: {}. Retrying in {}s",
-                                bridgeName,
-                                config.getHost(),
-                                config.getPort(),
-                                future.cause().getMessage(),
-                                config.getReconnectDelaySeconds());
+                        log.warning("[" + bridgeName + "] Connection to "
+                                + config.getHost() + ":" + config.getPort()
+                                + " failed: " + future.cause().getMessage()
+                                + ". Retrying in " + config.getReconnectDelaySeconds() + "s");
                         scheduleReconnect(future.channel().eventLoop());
                     }
                 });

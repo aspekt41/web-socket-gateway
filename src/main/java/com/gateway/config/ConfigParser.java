@@ -3,15 +3,14 @@ package com.gateway.config;
 import jakarta.xml.bind.JAXBContext;
 import jakarta.xml.bind.JAXBException;
 import jakarta.xml.bind.Unmarshaller;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.xml.sax.SAXException;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import javax.xml.XMLConstants;
 import javax.xml.validation.Schema;
 import javax.xml.validation.SchemaFactory;
 import java.io.File;
-import java.io.InputStream;
 import java.net.URL;
 
 /**
@@ -28,7 +27,7 @@ import java.net.URL;
  */
 public final class ConfigParser {
 
-    private static final Logger log = LoggerFactory.getLogger(ConfigParser.class);
+    private static final Logger log = Logger.getLogger(ConfigParser.class.getName());
     private static final String SCHEMA_RESOURCE = "/gateway-config.xsd";
 
     private ConfigParser() {}
@@ -42,7 +41,7 @@ public final class ConfigParser {
      *                         validation, or cannot be unmarshalled
      */
     public static GatewayConfig parse(File configFile) throws ConfigException {
-        log.info("Loading gateway config from: {}", configFile.getAbsolutePath());
+        log.info("Loading gateway config from: " + configFile.getAbsolutePath());
 
         Schema schema = loadSchema();
         JAXBContext ctx = createJaxbContext();
@@ -51,7 +50,7 @@ public final class ConfigParser {
             Unmarshaller um = ctx.createUnmarshaller();
             um.setSchema(schema);  // validation happens during unmarshal
             GatewayConfig config = (GatewayConfig) um.unmarshal(configFile);
-            log.info("Loaded {} bridge(s)", config.getBridges().size());
+            log.info("Loaded " + config.getBridges().size() + " bridge(s)");
             return config;
         } catch (JAXBException e) {
             throw new ConfigException(

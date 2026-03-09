@@ -8,8 +8,8 @@ import io.netty.handler.codec.http.websocketx.BinaryWebSocketFrame;
 import io.netty.handler.codec.http.websocketx.CloseWebSocketFrame;
 import io.netty.handler.codec.http.websocketx.PingWebSocketFrame;
 import io.netty.handler.codec.http.websocketx.PongWebSocketFrame;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  * Handles inbound WebSocket frames from a connected browser / JS client.
@@ -20,7 +20,7 @@ import org.slf4j.LoggerFactory;
  */
 public class WebSocketServerHandler extends SimpleChannelInboundHandler<WebSocketFrame> {
 
-    private static final Logger log = LoggerFactory.getLogger(WebSocketServerHandler.class);
+    private static final Logger log = Logger.getLogger(WebSocketServerHandler.class.getName());
 
     private final String bridgeName;
 
@@ -30,45 +30,44 @@ public class WebSocketServerHandler extends SimpleChannelInboundHandler<WebSocke
 
     @Override
     public void channelActive(ChannelHandlerContext ctx) {
-        log.info("[{}] WebSocket client connected: {}", bridgeName, ctx.channel().remoteAddress());
+        log.info("[" + bridgeName + "] WebSocket client connected: " + ctx.channel().remoteAddress());
     }
 
     @Override
     public void channelInactive(ChannelHandlerContext ctx) {
-        log.info("[{}] WebSocket client disconnected: {}", bridgeName, ctx.channel().remoteAddress());
+        log.info("[" + bridgeName + "] WebSocket client disconnected: " + ctx.channel().remoteAddress());
     }
 
     @Override
     protected void channelRead0(ChannelHandlerContext ctx, WebSocketFrame frame) {
         if (frame instanceof TextWebSocketFrame) {
             String text = ((TextWebSocketFrame) frame).text();
-            log.debug("[{}] Received text frame ({} bytes): {}",
-                    bridgeName, text.length(), text);
+            log.fine("[" + bridgeName + "] Received text frame (" + text.length() + " bytes): " + text);
             // TODO (bridge iteration): forward text to the TCP client channel
             // For now echo it back so callers can verify connectivity.
             ctx.writeAndFlush(new TextWebSocketFrame("echo: " + text));
 
         } else if (frame instanceof BinaryWebSocketFrame) {
             int bytes = frame.content().readableBytes();
-            log.debug("[{}] Received binary frame ({} bytes)", bridgeName, bytes);
+            log.fine("[" + bridgeName + "] Received binary frame (" + bytes + " bytes)");
             // TODO (bridge iteration): forward bytes to the TCP client channel
 
         } else if (frame instanceof PingWebSocketFrame) {
             ctx.writeAndFlush(new PongWebSocketFrame(frame.content().retain()));
 
         } else if (frame instanceof CloseWebSocketFrame) {
-            log.info("[{}] Received close frame, closing channel", bridgeName);
+            log.info("[" + bridgeName + "] Received close frame, closing channel");
             ctx.close();
 
         } else {
-            log.warn("[{}] Unhandled frame type: {}", bridgeName, frame.getClass().getSimpleName());
+            log.warning("[" + bridgeName + "] Unhandled frame type: " + frame.getClass().getSimpleName());
         }
     }
 
     @Override
     public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) {
-        log.error("[{}] Exception on WebSocket channel {}: {}",
-                bridgeName, ctx.channel().remoteAddress(), cause.getMessage(), cause);
+        log.log(Level.SEVERE, "[" + bridgeName + "] Exception on WebSocket channel "
+                + ctx.channel().remoteAddress(), cause);
         ctx.close();
     }
 }

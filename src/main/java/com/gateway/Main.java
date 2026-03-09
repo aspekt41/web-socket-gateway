@@ -6,10 +6,9 @@ import com.gateway.config.ConfigException;
 import com.gateway.config.ConfigParser;
 import com.gateway.config.GatewayConfig;
 import com.gateway.server.WebSocketServer;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.io.File;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -33,7 +32,7 @@ import java.util.List;
  */
 public class Main {
 
-    private static final Logger log = LoggerFactory.getLogger(Main.class);
+    private static final Logger log = Logger.getLogger(Main.class.getName());
 
     public static void main(String[] args) throws Exception {
         if (args.length < 1) {
@@ -51,7 +50,7 @@ public class Main {
         try {
             config = ConfigParser.parse(configFile);
         } catch (ConfigException e) {
-            log.error("Failed to load configuration: {}", e.getMessage(), e);
+            log.log(Level.SEVERE, "Failed to load configuration: " + e.getMessage(), e);
             System.exit(1);
             return;
         }
@@ -61,11 +60,11 @@ public class Main {
 
         for (BridgeConfig bridge : config.getBridges()) {
             if (!bridge.isEnabled()) {
-                log.info("Skipping disabled bridge: {}", bridge.getName());
+                log.info("Skipping disabled bridge: " + bridge.getName());
                 continue;
             }
 
-            log.info("Starting bridge: {}", bridge.getName());
+            log.info("Starting bridge: " + bridge.getName());
 
             WebSocketServer wsServer =
                     new WebSocketServer(bridge.getName(), bridge.getWebSocketServer());
@@ -79,7 +78,7 @@ public class Main {
         }
 
         if (wsServers.isEmpty()) {
-            log.warn("No enabled bridges found in config — exiting.");
+            log.warning("No enabled bridges found in config — exiting.");
             System.exit(0);
         }
 

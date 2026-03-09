@@ -17,10 +17,9 @@ import io.netty.handler.codec.http.websocketx.WebSocketServerProtocolHandler;
 import io.netty.handler.codec.http.websocketx.extensions.compression.WebSocketServerCompressionHandler;
 import io.netty.handler.logging.LogLevel;
 import io.netty.handler.logging.LoggingHandler;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.net.InetSocketAddress;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  * Netty-based WebSocket server.
@@ -39,7 +38,7 @@ import java.net.InetSocketAddress;
  */
 public class WebSocketServer implements AutoCloseable {
 
-    private static final Logger log = LoggerFactory.getLogger(WebSocketServer.class);
+    private static final Logger log = Logger.getLogger(WebSocketServer.class.getName());
 
     /** Netty limits for the HTTP upgrade request (not the WS frames). */
     private static final int HTTP_MAX_CONTENT_LENGTH = 65536;
@@ -92,12 +91,9 @@ public class WebSocketServer implements AutoCloseable {
         ChannelFuture bindFuture = bootstrap.bind(address).sync();
         serverChannel = bindFuture.channel();
 
-        log.info("[{}] WebSocket server listening on ws://{}:{}{} (max frame {} bytes)",
-                bridgeName,
-                config.getBindAddress(),
-                config.getPort(),
-                config.getPath(),
-                config.getMaxFrameBytes());
+        log.info("[" + bridgeName + "] WebSocket server listening on ws://"
+                + config.getBindAddress() + ":" + config.getPort() + config.getPath()
+                + " (max frame " + config.getMaxFrameBytes() + " bytes)");
     }
 
     /**
@@ -113,7 +109,7 @@ public class WebSocketServer implements AutoCloseable {
     /** Gracefully shuts down the server and releases all Netty resources. */
     @Override
     public void stop() {
-        log.info("[{}] Stopping WebSocket server", bridgeName);
+        log.info("[" + bridgeName + "] Stopping WebSocket server");
         if (serverChannel != null) {
             serverChannel.close();
         }
