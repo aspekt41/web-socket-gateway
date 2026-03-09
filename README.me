@@ -1,0 +1,9 @@
+# Purpose
+
+The purpose of this project is to build a simple java application that bridges normal sockets to websockets.
+
+When building for the browser, we can't just open up a connection to a TCP server, or subscribe to UDP multicast.
+
+This project aims to on one hand subscribe to TCP as a client, or create a TCP server, or subscribe to UDP multicast,
+and at the same time present a websocket connection. The goal of all this is that we can take data from the websocket
+and transfer it to the "legacy" socket, and the legacy socket data can be transferred into the websocket.
