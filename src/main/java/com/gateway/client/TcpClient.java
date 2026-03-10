@@ -1,5 +1,6 @@
 package com.gateway.client;
 
+import com.gateway.bridge.BridgeSession;
 import com.gateway.config.TcpClientConfig;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.Channel;
@@ -41,15 +42,17 @@ public class TcpClient implements AutoCloseable {
 
     private final String bridgeName;
     private final TcpClientConfig config;
+    private final BridgeSession session;
 
     private EventLoopGroup eventLoopGroup;
     private Bootstrap bootstrap;
     private volatile Channel channel;
     private final AtomicBoolean stopped = new AtomicBoolean(false);
 
-    public TcpClient(String bridgeName, TcpClientConfig config) {
+    public TcpClient(String bridgeName, TcpClientConfig config, BridgeSession session) {
         this.bridgeName = bridgeName;
         this.config = config;
+        this.session = session;
     }
 
     /**
@@ -71,7 +74,7 @@ public class TcpClient implements AutoCloseable {
                         ChannelPipeline p = ch.pipeline();
                         // TODO (bridge iteration): add frame decoder here, e.g.
                         //   p.addLast(new LineBasedFrameDecoder(8192));
-                        p.addLast(new TcpClientHandler(bridgeName, TcpClient.this));
+                        p.addLast(new TcpClientHandler(bridgeName, TcpClient.this, session));
                     }
                 });
 
@@ -79,7 +82,6 @@ public class TcpClient implements AutoCloseable {
     }
 
     /** Gracefully closes the connection and shuts down the event loop group. */
-    @Override
     public void stop() {
         if (stopped.compareAndSet(false, true)) {
             log.info("[" + bridgeName + "] Stopping TCP client");

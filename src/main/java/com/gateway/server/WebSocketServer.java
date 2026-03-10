@@ -1,5 +1,6 @@
 package com.gateway.server;
 
+import com.gateway.bridge.BridgeSession;
 import com.gateway.config.WebSocketServerConfig;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.Channel;
@@ -45,14 +46,16 @@ public class WebSocketServer implements AutoCloseable {
 
     private final String bridgeName;
     private final WebSocketServerConfig config;
+    private final BridgeSession session;
 
     private EventLoopGroup bossGroup;
     private EventLoopGroup workerGroup;
     private Channel serverChannel;
 
-    public WebSocketServer(String bridgeName, WebSocketServerConfig config) {
+    public WebSocketServer(String bridgeName, WebSocketServerConfig config, BridgeSession session) {
         this.bridgeName = bridgeName;
         this.config = config;
+        this.session = session;
     }
 
     /**
@@ -83,7 +86,7 @@ public class WebSocketServer implements AutoCloseable {
                                 /*subprotocols=*/ null,
                                 /*allowExtensions=*/ true,
                                 config.getMaxFrameBytes()));
-                        p.addLast(new WebSocketServerHandler(bridgeName));
+                        p.addLast(new WebSocketServerHandler(bridgeName, session));
                     }
                 });
 
@@ -107,7 +110,6 @@ public class WebSocketServer implements AutoCloseable {
     }
 
     /** Gracefully shuts down the server and releases all Netty resources. */
-    @Override
     public void stop() {
         log.info("[" + bridgeName + "] Stopping WebSocket server");
         if (serverChannel != null) {

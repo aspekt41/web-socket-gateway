@@ -1,13 +1,16 @@
 package com.gateway.server;
 
+import com.gateway.bridge.BridgeSession;
+import io.netty.buffer.ByteBuf;
+import io.netty.channel.Channel;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
-import io.netty.handler.codec.http.websocketx.TextWebSocketFrame;
-import io.netty.handler.codec.http.websocketx.WebSocketFrame;
 import io.netty.handler.codec.http.websocketx.BinaryWebSocketFrame;
 import io.netty.handler.codec.http.websocketx.CloseWebSocketFrame;
 import io.netty.handler.codec.http.websocketx.PingWebSocketFrame;
 import io.netty.handler.codec.http.websocketx.PongWebSocketFrame;
+import io.netty.handler.codec.http.websocketx.TextWebSocketFrame;
+import io.netty.handler.codec.http.websocketx.WebSocketFrame;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -23,13 +26,16 @@ public class WebSocketServerHandler extends SimpleChannelInboundHandler<WebSocke
     private static final Logger log = Logger.getLogger(WebSocketServerHandler.class.getName());
 
     private final String bridgeName;
+    private final BridgeSession session;
 
-    public WebSocketServerHandler(String bridgeName) {
+    public WebSocketServerHandler(String bridgeName, BridgeSession session) {
         this.bridgeName = bridgeName;
+        this.session = session;
     }
 
     @Override
     public void channelActive(ChannelHandlerContext ctx) {
+        session.addWsChannel(ctx.channel());
         log.info("[" + bridgeName + "] WebSocket client connected: " + ctx.channel().remoteAddress());
     }
 
@@ -40,17 +46,12 @@ public class WebSocketServerHandler extends SimpleChannelInboundHandler<WebSocke
 
     @Override
     protected void channelRead0(ChannelHandlerContext ctx, WebSocketFrame frame) {
-        if (frame instanceof TextWebSocketFrame) {
-            String text = ((TextWebSocketFrame) frame).text();
-            log.fine("[" + bridgeName + "] Received text frame (" + text.length() + " bytes): " + text);
-            // TODO (bridge iteration): forward text to the TCP client channel
-            // For now echo it back so callers can verify connectivity.
-            ctx.writeAndFlush(new TextWebSocketFrame("echo: " + text));
-
-        } else if (frame instanceof BinaryWebSocketFrame) {
-            int bytes = frame.content().readableBytes();
-            log.fine("[" + bridgeName + "] Received binary frame (" + bytes + " bytes)");
-            // TODO (bridge iteration): forward bytes to the TCP client channel
+        if (frame instanceof TextWebSocketFrame || frame instanceof BinaryWebSocketFrame) {
+            ByteBuf payload = frame.content();
+            log.fine("[" + bridgeName + "] Received "
+                    + (frame instanceof TextWebSocketFrame ? "text" : "binary")
+                    + " frame (" + payload.readableBytes() + " bytes), forwarding to TCP");
+            forwardToTcp(payload);
 
         } else if (frame instanceof PingWebSocketFrame) {
             ctx.writeAndFlush(new PongWebSocketFrame(frame.content().retain()));
@@ -62,6 +63,24 @@ public class WebSocketServerHandler extends SimpleChannelInboundHandler<WebSocke
         } else {
             log.warning("[" + bridgeName + "] Unhandled frame type: " + frame.getClass().getSimpleName());
         }
+    }
+
+    private void forwardToTcp(ByteBuf payload) {
+        Channel tcpCh = session.getTcpChannel();
+        if (tcpCh == null || !tcpCh.isActive()) {
+            log.warning("[" + bridgeName + "] WS frame received but TCP is disconnected; dropping "
+                    + payload.readableBytes() + " bytes");
+            // SimpleChannelInboundHandler auto-releases the frame after channelRead0 returns.
+            return;
+        }
+        // retain() because SimpleChannelInboundHandler releases the frame after channelRead0
+        // returns, but writeAndFlush is async and needs the buf to outlive this stack frame.
+        tcpCh.writeAndFlush(payload.retain()).addListener(future -> {
+            if (!future.isSuccess()) {
+                log.log(Level.WARNING, "[" + bridgeName + "] Failed to write to TCP channel",
+                        future.cause());
+            }
+        });
     }
 
     @Override

@@ -1,5 +1,6 @@
 package com.gateway;
 
+import com.gateway.bridge.BridgeSession;
 import com.gateway.client.TcpClient;
 import com.gateway.config.BridgeConfig;
 import com.gateway.config.ConfigException;
@@ -66,13 +67,15 @@ public class Main {
 
             log.info("Starting bridge: " + bridge.getName());
 
+            BridgeSession session = new BridgeSession(bridge.getName());
+
             WebSocketServer wsServer =
-                    new WebSocketServer(bridge.getName(), bridge.getWebSocketServer());
+                    new WebSocketServer(bridge.getName(), bridge.getWebSocketServer(), session);
             wsServer.start();
             wsServers.add(wsServer);
 
             TcpClient tcpClient =
-                    new TcpClient(bridge.getName(), bridge.getTcpClient());
+                    new TcpClient(bridge.getName(), bridge.getTcpClient(), session);
             tcpClient.start();
             tcpClients.add(tcpClient);
         }
