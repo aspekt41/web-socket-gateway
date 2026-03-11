@@ -1,0 +1,31 @@
+#!/bin/sh
+# WebSocket Gateway launcher
+# Usage: bin/gateway <config.xml>
+#
+# Requires Java 21+ on PATH or JAVA_HOME set.
+# The fat jar (gateway.jar) must be in the same directory as this script.
+
+set -e
+
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+JAR="$SCRIPT_DIR/gateway.jar"
+
+if [ ! -f "$JAR" ]; then
+    echo "ERROR: $JAR not found." >&2
+    echo "Build it first with:  ./gradlew shadowJar" >&2
+    echo "Then copy bin/gateway and build/libs/gateway.jar to your target directory." >&2
+    exit 1
+fi
+
+if [ -n "$JAVA_HOME" ]; then
+    JAVA="$JAVA_HOME/bin/java"
+else
+    JAVA="java"
+fi
+
+if ! command -v "$JAVA" >/dev/null 2>&1; then
+    echo "ERROR: Java not found. Set JAVA_HOME or add java to PATH." >&2
+    exit 1
+fi
+
+exec "$JAVA" $JAVA_OPTS -jar "$JAR" "$@"
