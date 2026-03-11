@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<gateway-config xmlns="http://github.com/web-socket-gateway/config/v1">
+
+    <bridge name="alpha">
+        <websocket-server port="9004"/>
+        <tcp-client host="host-a" port="5003"/>
+    </bridge>
+
+    <bridge name="beta" enabled="false">
+        <websocket-server bind-address="0.0.0.0" port="9005" path="/feed"/>
+        <tcp-client host="host-b" port="5004" reconnect-delay-seconds="10"/>
+    </bridge>
+
+</gateway-config>

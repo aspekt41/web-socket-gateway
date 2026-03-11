@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<gateway-config xmlns="http://github.com/web-socket-gateway/config/v1">
+    <bridge name="off-bridge" enabled="false">
+        <websocket-server port="9003"/>
+        <tcp-client host="localhost" port="5002"/>
+    </bridge>
+</gateway-config>

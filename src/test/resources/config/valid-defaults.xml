@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Only the required attributes are set; all others should use XSD defaults. -->
+<gateway-config xmlns="http://github.com/web-socket-gateway/config/v1">
+    <bridge name="default-test">
+        <websocket-server port="9002"/>
+        <tcp-client host="localhost" port="5001"/>
+    </bridge>
+</gateway-config>

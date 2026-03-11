@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- tcp-client is missing the required 'host' attribute — schema validation must reject this -->
+<gateway-config xmlns="http://github.com/web-socket-gateway/config/v1">
+    <bridge name="bad-bridge">
+        <websocket-server port="9006"/>
+        <tcp-client port="5005"/>
+    </bridge>
+</gateway-config>
