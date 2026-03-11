@@ -1,10 +1,12 @@
 package com.gateway;
 
-import com.gateway.bridge.ChannelBridge;
 import com.gateway.client.TcpClient;
-import com.gateway.config.BridgeConfig;
 import com.gateway.config.ConfigParser;
 import com.gateway.config.GatewayConfig;
+import com.gateway.config.TcpClientConfig;
+import com.gateway.config.WebSocketServerConfig;
+import com.gateway.connection.TcpClientEndpoint;
+import com.gateway.connection.WebSocketEndpoint;
 import com.gateway.server.WebSocketServer;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.Timeout;
@@ -35,7 +37,8 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  *   <li>A real {@link ServerSocket} acting as the remote TCP service.
  *   <li>A {@link GatewayConfig} parsed from a dynamically-generated XML config.
  *   <li>A real {@link WebSocketServer} and {@link TcpClient} constructed from
- *       that config and sharing a {@link ChannelBridge}.
+ *       that config with explicit {@link WebSocketEndpoint} / {@link TcpClientEndpoint}
+ *       and bidirectional {@code <forward>} rules.
  *   <li>A Java {@link HttpClient}-based WebSocket client connecting to the
  *       gateway's WebSocket server.
  * </ol>
@@ -75,18 +78,25 @@ class BridgeIntegrationTest {
 
         try {
             // ------------------------------------------------------------
-            // 2.  Build a gateway config that points at the test TCP server.
+            // 2.  Parse a gateway config and wire endpoints + forward rules.
             // ------------------------------------------------------------
             File configFile = writeTempConfig(wsPort, tcpPort);
             GatewayConfig config = ConfigParser.parse(configFile);
-            BridgeConfig bridge = config.getBridges().get(0);
 
-            ChannelBridge session = new ChannelBridge(bridge.getName());
+            WebSocketServerConfig wsCfg  = config.getWebSocketServers().get(0);
+            TcpClientConfig       tcpCfg = config.getTcpClients().get(0);
 
-            wsServer = new WebSocketServer(bridge.getName(), bridge.getWebSocketServer(), session);
+            WebSocketEndpoint wsEndpoint  = new WebSocketEndpoint(wsCfg.getLabel());
+            TcpClientEndpoint tcpEndpoint = new TcpClientEndpoint(tcpCfg.getLabel());
+
+            // Bidirectional forwarding
+            wsEndpoint.addTarget(tcpEndpoint);
+            tcpEndpoint.addTarget(wsEndpoint);
+
+            wsServer  = new WebSocketServer(wsCfg, wsEndpoint);
             wsServer.start();
 
-            tcpClient = new TcpClient(bridge.getName(), bridge.getTcpClient(), session);
+            tcpClient = new TcpClient(tcpCfg, tcpEndpoint);
             tcpClient.start();
 
             // ------------------------------------------------------------
@@ -113,7 +123,7 @@ class BridgeIntegrationTest {
                     "WebSocket handshake did not complete within 10 s");
 
             // Brief pause so that the WS channel is fully registered in the
-            // session before we start sending TCP data.
+            // endpoint before we start sending TCP data.
             Thread.sleep(100);
 
             // ------------------------------------------------------------
@@ -227,17 +237,17 @@ class BridgeIntegrationTest {
     }
 
     /**
-     * Writes a temporary XML config file with the given WS and TCP ports and
-     * returns its {@link File}.  The file is deleted when the JVM exits.
+     * Writes a temporary XML config file with the given WS and TCP ports
+     * using the new labeled-connection + forward-rule format.
      */
     private static File writeTempConfig(int wsPort, int tcpPort) throws IOException {
         String xml = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
                 + "<gateway-config xmlns=\"http://github.com/web-socket-gateway/config/v1\">\n"
-                + "  <bridge name=\"test-bridge\">\n"
-                + "    <websocket-server port=\"" + wsPort + "\"/>\n"
-                + "    <tcp-client host=\"127.0.0.1\" port=\"" + tcpPort
+                + "  <websocket-server label=\"test-ws\" port=\"" + wsPort + "\"/>\n"
+                + "  <tcp-client label=\"test-tcp\" host=\"127.0.0.1\" port=\"" + tcpPort
                 + "\" reconnect-delay-seconds=\"1\"/>\n"
-                + "  </bridge>\n"
+                + "  <forward from=\"test-ws\"  to=\"test-tcp\"/>\n"
+                + "  <forward from=\"test-tcp\" to=\"test-ws\"/>\n"
                 + "</gateway-config>\n";
 
         File tmp = File.createTempFile("gw-integration-", ".xml");

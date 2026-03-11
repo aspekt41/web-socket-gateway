@@ -2,10 +2,12 @@
 <!--
   Schema for WebSocket Gateway configuration.
 
-  Defines one or more named "bridge" entries, each pairing a WebSocket server
-  endpoint with a TCP client endpoint.  The schema is intentionally minimal
-  for this first iteration; additional transports (TCP server, UDP multicast)
-  will be added in later versions.
+  Connections are declared as top-level labeled elements (<websocket-server>,
+  <tcp-client>).  Data flow is configured separately via <forward> rules, each
+  specifying a unidirectional path from one labeled connection to another.
+
+  Fan-out is supported: a single source may forward to multiple targets by
+  listing multiple <forward from="source" to="..."/> rules.
 
   Namespace: http://github.com/web-socket-gateway/config/v1
 -->
@@ -13,7 +15,7 @@
            targetNamespace="http://github.com/web-socket-gateway/config/v1"
            xmlns:tns="http://github.com/web-socket-gateway/config/v1"
            elementFormDefault="qualified"
-           version="1.0">
+           version="2.0">
 
     <!-- ================================================================== -->
     <!-- Root element                                                         -->
@@ -21,32 +23,18 @@
     <xs:element name="gateway-config" type="tns:GatewayConfigType">
         <xs:annotation>
             <xs:documentation>
-                Root element.  Contains one or more bridge definitions.
+                Root element. Contains any mix of connection declarations
+                (websocket-server, tcp-client) and unidirectional forward rules.
             </xs:documentation>
         </xs:annotation>
     </xs:element>
 
     <xs:complexType name="GatewayConfigType">
-        <xs:sequence>
-            <xs:element name="bridge" type="tns:BridgeType"
-                        minOccurs="1" maxOccurs="unbounded"/>
-        </xs:sequence>
-    </xs:complexType>
-
-    <!-- ================================================================== -->
-    <!-- Bridge: pairs a WebSocket server with a TCP client                  -->
-    <!-- ================================================================== -->
-    <xs:complexType name="BridgeType">
-        <xs:all>
+        <xs:choice minOccurs="0" maxOccurs="unbounded">
             <xs:element name="websocket-server" type="tns:WebSocketServerType"/>
             <xs:element name="tcp-client"       type="tns:TcpClientType"/>
-        </xs:all>
-        <!--
-          name: human-readable identifier used in log messages.
-          enabled: set to false to skip this bridge at startup.
-        -->
-        <xs:attribute name="name"    type="xs:string"  use="required"/>
-        <xs:attribute name="enabled" type="xs:boolean" default="true"/>
+            <xs:element name="forward"          type="tns:ForwardType"/>
+        </xs:choice>
     </xs:complexType>
 
     <!-- ================================================================== -->
@@ -55,9 +43,11 @@
     <xs:complexType name="WebSocketServerType">
         <xs:annotation>
             <xs:documentation>
-                Configures the Netty WebSocket server that browser / JS clients
+                Configures a Netty WebSocket server that browser / JS clients
                 connect to.
 
+                label         - Unique name used in forward rules to reference
+                                this endpoint (required).
                 bind-address  - IP address (or hostname) to listen on.
                                 Use 0.0.0.0 to accept connections on all
                                 network interfaces (default).
@@ -67,9 +57,10 @@
                                   Defaults to 65536 (64 KiB).
             </xs:documentation>
         </xs:annotation>
-        <xs:attribute name="bind-address"    type="xs:string"        default="0.0.0.0"/>
-        <xs:attribute name="port"            type="tns:PortType"     use="required"/>
-        <xs:attribute name="path"            type="xs:string"        default="/ws"/>
+        <xs:attribute name="label"           type="xs:string"          use="required"/>
+        <xs:attribute name="bind-address"    type="xs:string"          default="0.0.0.0"/>
+        <xs:attribute name="port"            type="tns:PortType"       use="required"/>
+        <xs:attribute name="path"            type="xs:string"          default="/ws"/>
         <xs:attribute name="max-frame-bytes" type="xs:positiveInteger" default="65536"/>
     </xs:complexType>
 
@@ -79,10 +70,12 @@
     <xs:complexType name="TcpClientType">
         <xs:annotation>
             <xs:documentation>
-                Configures the outbound TCP client connection.
+                Configures an outbound TCP client connection.
 
-                host                   - Remote hostname or IP address (required).
-                port                   - Remote TCP port (required).
+                label                   - Unique name used in forward rules to
+                                          reference this endpoint (required).
+                host                    - Remote hostname or IP address (required).
+                port                    - Remote TCP port (required).
                 reconnect-delay-seconds - Seconds to wait before attempting to
                                           reconnect after a lost connection.
                                           Defaults to 5.
@@ -91,10 +84,26 @@
                                           Defaults to 10.
             </xs:documentation>
         </xs:annotation>
-        <xs:attribute name="host"                    type="xs:string"        use="required"/>
-        <xs:attribute name="port"                    type="tns:PortType"     use="required"/>
+        <xs:attribute name="label"                   type="xs:string"          use="required"/>
+        <xs:attribute name="host"                    type="xs:string"          use="required"/>
+        <xs:attribute name="port"                    type="tns:PortType"       use="required"/>
         <xs:attribute name="reconnect-delay-seconds" type="xs:positiveInteger" default="5"/>
         <xs:attribute name="connect-timeout-seconds" type="xs:positiveInteger" default="10"/>
+    </xs:complexType>
+
+    <!-- ================================================================== -->
+    <!-- Unidirectional forwarding rule                                       -->
+    <!-- ================================================================== -->
+    <xs:complexType name="ForwardType">
+        <xs:annotation>
+            <xs:documentation>
+                Declares a unidirectional forwarding rule.  Data arriving at the
+                endpoint named by 'from' will be delivered to the endpoint named
+                by 'to'.  Multiple rules with the same 'from' achieve fan-out.
+            </xs:documentation>
+        </xs:annotation>
+        <xs:attribute name="from" type="xs:string" use="required"/>
+        <xs:attribute name="to"   type="xs:string" use="required"/>
     </xs:complexType>
 
     <!-- ================================================================== -->

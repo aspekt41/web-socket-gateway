@@ -4,28 +4,30 @@
 
   Validate against: src/main/resources/gateway-config.xsd
   Namespace:        http://github.com/web-socket-gateway/config/v1
+
+  Each connection is declared with a unique label.
+  Data flow is configured via explicit <forward> rules (unidirectional).
+  Both directions are listed here for a full bidirectional bridge.
 -->
 <gateway-config xmlns="http://github.com/web-socket-gateway/config/v1">
 
-    <!--
-      A single bridge named "market-data":
-        - Listens for WebSocket clients on all interfaces, port 8080, at /ws
-        - Connects as a TCP client to localhost:9090
-    -->
-    <bridge name="market-data" enabled="true">
+    <!-- Labeled connection endpoints -->
+    <websocket-server
+        label="market-data-ws"
+        bind-address="0.0.0.0"
+        port="8080"
+        path="/ws"
+        max-frame-bytes="65536"/>
 
-        <websocket-server
-            bind-address="0.0.0.0"
-            port="8080"
-            path="/ws"
-            max-frame-bytes="65536"/>
+    <tcp-client
+        label="market-data-tcp"
+        host="localhost"
+        port="9090"
+        reconnect-delay-seconds="5"
+        connect-timeout-seconds="10"/>
 
-        <tcp-client
-            host="localhost"
-            port="9090"
-            reconnect-delay-seconds="5"
-            connect-timeout-seconds="10"/>
-
-    </bridge>
+    <!-- Bidirectional forwarding rules -->
+    <forward from="market-data-ws"  to="market-data-tcp"/>
+    <forward from="market-data-tcp" to="market-data-ws"/>
 
 </gateway-config>

@@ -7,6 +7,7 @@ import java.io.File;
 import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -34,23 +35,30 @@ class ConfigParserTest {
     void parsesValidFullConfig() throws Exception {
         GatewayConfig cfg = ConfigParser.parse(fixture("valid-full.xml"));
 
-        assertEquals(1, cfg.getBridges().size());
-        BridgeConfig bridge = cfg.getBridges().get(0);
-
-        assertEquals("bridge-one", bridge.getName());
-        assertTrue(bridge.isEnabled());
-
-        WebSocketServerConfig ws = bridge.getWebSocketServer();
+        List<WebSocketServerConfig> wsList = cfg.getWebSocketServers();
+        assertEquals(1, wsList.size());
+        WebSocketServerConfig ws = wsList.get(0);
+        assertEquals("ws-one", ws.getLabel());
         assertEquals("127.0.0.1", ws.getBindAddress());
         assertEquals(9001, ws.getPort());
         assertEquals("/data", ws.getPath());
         assertEquals(32768, ws.getMaxFrameBytes());
 
-        TcpClientConfig tcp = bridge.getTcpClient();
+        List<TcpClientConfig> tcpList = cfg.getTcpClients();
+        assertEquals(1, tcpList.size());
+        TcpClientConfig tcp = tcpList.get(0);
+        assertEquals("tcp-one", tcp.getLabel());
         assertEquals("192.168.1.100", tcp.getHost());
         assertEquals(5000, tcp.getPort());
         assertEquals(3, tcp.getReconnectDelaySeconds());
         assertEquals(7, tcp.getConnectTimeoutSeconds());
+
+        List<ForwardConfig> fwds = cfg.getForwards();
+        assertEquals(2, fwds.size());
+        assertEquals("ws-one",  fwds.get(0).getFrom());
+        assertEquals("tcp-one", fwds.get(0).getTo());
+        assertEquals("tcp-one", fwds.get(1).getFrom());
+        assertEquals("ws-one",  fwds.get(1).getTo());
     }
 
     // -----------------------------------------------------------------------
@@ -60,57 +68,61 @@ class ConfigParserTest {
     @Test
     void parsesValidConfigWithDefaults() throws Exception {
         GatewayConfig cfg = ConfigParser.parse(fixture("valid-defaults.xml"));
-        BridgeConfig bridge = cfg.getBridges().get(0);
 
-        assertEquals("default-test", bridge.getName());
-        assertTrue(bridge.isEnabled(), "enabled should default to true");
-
-        WebSocketServerConfig ws = bridge.getWebSocketServer();
+        WebSocketServerConfig ws = cfg.getWebSocketServers().get(0);
+        assertEquals("ws-defaults", ws.getLabel());
         assertEquals("0.0.0.0", ws.getBindAddress(), "bind-address should default to 0.0.0.0");
         assertEquals(9002, ws.getPort());
         assertEquals("/ws", ws.getPath(), "path should default to /ws");
         assertEquals(65536, ws.getMaxFrameBytes(), "max-frame-bytes should default to 65536");
 
-        TcpClientConfig tcp = bridge.getTcpClient();
+        TcpClientConfig tcp = cfg.getTcpClients().get(0);
+        assertEquals("tcp-defaults", tcp.getLabel());
         assertEquals("localhost", tcp.getHost());
         assertEquals(5001, tcp.getPort());
         assertEquals(5, tcp.getReconnectDelaySeconds(), "reconnect-delay-seconds should default to 5");
         assertEquals(10, tcp.getConnectTimeoutSeconds(), "connect-timeout-seconds should default to 10");
+
+        assertEquals(2, cfg.getForwards().size());
     }
 
     // -----------------------------------------------------------------------
-    // Happy-path: disabled-bridge.xml
+    // Happy-path: disabled-bridge.xml (repurposed as one-way forward fixture)
     // -----------------------------------------------------------------------
 
     @Test
-    void parsesDisabledBridge() throws Exception {
+    void parsesOneWayForwardConfig() throws Exception {
         GatewayConfig cfg = ConfigParser.parse(fixture("disabled-bridge.xml"));
-        BridgeConfig bridge = cfg.getBridges().get(0);
 
-        assertEquals("off-bridge", bridge.getName());
-        assertFalse(bridge.isEnabled());
+        assertEquals(1, cfg.getWebSocketServers().size());
+        assertEquals("ws-send-only", cfg.getWebSocketServers().get(0).getLabel());
+        assertEquals(1, cfg.getTcpClients().size());
+        assertEquals("tcp-recv-only", cfg.getTcpClients().get(0).getLabel());
+        // Only one forward rule — no return path
+        assertEquals(1, cfg.getForwards().size());
+        assertEquals("ws-send-only",  cfg.getForwards().get(0).getFrom());
+        assertEquals("tcp-recv-only", cfg.getForwards().get(0).getTo());
     }
 
     // -----------------------------------------------------------------------
-    // Happy-path: multiple-bridges.xml
+    // Happy-path: multiple-bridges.xml — multiple connections and rules
     // -----------------------------------------------------------------------
 
     @Test
-    void parsesMultipleBridges() throws Exception {
+    void parsesMultipleConnections() throws Exception {
         GatewayConfig cfg = ConfigParser.parse(fixture("multiple-bridges.xml"));
 
-        assertEquals(2, cfg.getBridges().size());
+        assertEquals(2, cfg.getWebSocketServers().size());
+        assertEquals(2, cfg.getTcpClients().size());
+        assertEquals(3, cfg.getForwards().size());
 
-        BridgeConfig alpha = cfg.getBridges().get(0);
-        assertEquals("alpha", alpha.getName());
-        assertTrue(alpha.isEnabled());
-        assertEquals("host-a", alpha.getTcpClient().getHost());
-
-        BridgeConfig beta = cfg.getBridges().get(1);
-        assertEquals("beta", beta.getName());
-        assertFalse(beta.isEnabled());
-        assertEquals("/feed", beta.getWebSocketServer().getPath());
-        assertEquals(10, beta.getTcpClient().getReconnectDelaySeconds());
+        assertEquals("ws-alpha",   cfg.getWebSocketServers().get(0).getLabel());
+        assertEquals("ws-beta",    cfg.getWebSocketServers().get(1).getLabel());
+        assertEquals("/feed",      cfg.getWebSocketServers().get(1).getPath());
+        assertEquals("tcp-alpha",  cfg.getTcpClients().get(0).getLabel());
+        assertEquals("host-a",     cfg.getTcpClients().get(0).getHost());
+        assertEquals("tcp-beta",   cfg.getTcpClients().get(1).getLabel());
+        assertEquals(10,           cfg.getTcpClients().get(1).getReconnectDelaySeconds());
     }
 
     // -----------------------------------------------------------------------
@@ -127,13 +139,18 @@ class ConfigParserTest {
 
         GatewayConfig cfg = ConfigParser.parse(exampleConfig);
 
-        assertEquals(1, cfg.getBridges().size());
-        BridgeConfig bridge = cfg.getBridges().get(0);
-        assertEquals("market-data", bridge.getName());
-        assertTrue(bridge.isEnabled());
-        assertEquals(8080, bridge.getWebSocketServer().getPort());
-        assertEquals("localhost", bridge.getTcpClient().getHost());
-        assertEquals(9090, bridge.getTcpClient().getPort());
+        assertEquals(1, cfg.getWebSocketServers().size());
+        WebSocketServerConfig ws = cfg.getWebSocketServers().get(0);
+        assertEquals("market-data-ws", ws.getLabel());
+        assertEquals(8080, ws.getPort());
+
+        assertEquals(1, cfg.getTcpClients().size());
+        TcpClientConfig tcp = cfg.getTcpClients().get(0);
+        assertEquals("market-data-tcp", tcp.getLabel());
+        assertEquals("localhost", tcp.getHost());
+        assertEquals(9090, tcp.getPort());
+
+        assertEquals(2, cfg.getForwards().size());
     }
 
     // -----------------------------------------------------------------------

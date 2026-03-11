@@ -1,7 +1,16 @@
 <?xml version="1.0" encoding="UTF-8"?>
+<!-- All optional attributes explicit. Two forward rules for bidirectional flow. -->
 <gateway-config xmlns="http://github.com/web-socket-gateway/config/v1">
-    <bridge name="bridge-one" enabled="true">
-        <websocket-server bind-address="127.0.0.1" port="9001" path="/data" max-frame-bytes="32768"/>
-        <tcp-client host="192.168.1.100" port="5000" reconnect-delay-seconds="3" connect-timeout-seconds="7"/>
-    </bridge>
+    <websocket-server label="ws-one"
+                      bind-address="127.0.0.1"
+                      port="9001"
+                      path="/data"
+                      max-frame-bytes="32768"/>
+    <tcp-client label="tcp-one"
+                host="192.168.1.100"
+                port="5000"
+                reconnect-delay-seconds="3"
+                connect-timeout-seconds="7"/>
+    <forward from="ws-one"  to="tcp-one"/>
+    <forward from="tcp-one" to="ws-one"/>
 </gateway-config>

@@ -12,6 +12,9 @@ import jakarta.xml.bind.annotation.XmlAttribute;
 @XmlAccessorType(XmlAccessType.FIELD)
 public class WebSocketServerConfig {
 
+    @XmlAttribute(name = "label", required = true)
+    private String label;
+
     @XmlAttribute(name = "bind-address")
     private String bindAddress = "0.0.0.0";
 
@@ -24,6 +27,7 @@ public class WebSocketServerConfig {
     @XmlAttribute(name = "max-frame-bytes")
     private int maxFrameBytes = 65536;
 
+    public String getLabel() { return label; }
     public String getBindAddress() { return bindAddress; }
     public int getPort() { return port; }
     public String getPath() { return path; }
@@ -31,7 +35,8 @@ public class WebSocketServerConfig {
 
     @Override
     public String toString() {
-        return "WebSocketServerConfig{bindAddress='" + bindAddress
+        return "WebSocketServerConfig{label='" + label
+                + "', bindAddress='" + bindAddress
                 + "', port=" + port
                 + ", path='" + path + "'"
                 + ", maxFrameBytes=" + maxFrameBytes + "}";

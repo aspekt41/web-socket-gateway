@@ -1,6 +1,6 @@
 package com.gateway.server;
 
-import com.gateway.bridge.ChannelBridge;
+import com.gateway.connection.WebSocketEndpoint;
 import com.gateway.config.WebSocketServerConfig;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.*;
@@ -39,18 +39,16 @@ public class WebSocketServer implements AutoCloseable {
     /** Netty limits for the HTTP upgrade request (not the WS frames). */
     private static final int HTTP_MAX_CONTENT_LENGTH = 65536;
 
-    private final String bridgeName;
     private final WebSocketServerConfig config;
-    private final ChannelBridge session;
+    private final WebSocketEndpoint endpoint;
 
     private EventLoopGroup bossGroup;
     private EventLoopGroup workerGroup;
     private Channel serverChannel;
 
-    public WebSocketServer(String bridgeName, WebSocketServerConfig config, ChannelBridge session) {
-        this.bridgeName = bridgeName;
-        this.config = config;
-        this.session = session;
+    public WebSocketServer(WebSocketServerConfig config, WebSocketEndpoint endpoint) {
+        this.config   = config;
+        this.endpoint = endpoint;
     }
 
     /**
@@ -81,7 +79,7 @@ public class WebSocketServer implements AutoCloseable {
                                 /*subprotocols=*/ null,
                                 /*allowExtensions=*/ true,
                                 config.getMaxFrameBytes()));
-                        p.addLast(new WebSocketServerHandler(bridgeName, session));
+                        p.addLast(new WebSocketServerHandler(endpoint));
                     }
                 });
 
@@ -89,7 +87,7 @@ public class WebSocketServer implements AutoCloseable {
         ChannelFuture bindFuture = bootstrap.bind(address).sync();
         serverChannel = bindFuture.channel();
 
-        log.info("[" + bridgeName + "] WebSocket server listening on ws://"
+        log.info("[" + endpoint.getLabel() + "] WebSocket server listening on ws://"
                 + config.getBindAddress() + ":" + config.getPort() + config.getPath()
                 + " (max frame " + config.getMaxFrameBytes() + " bytes)");
     }
@@ -106,7 +104,7 @@ public class WebSocketServer implements AutoCloseable {
 
     /** Gracefully shuts down the server and releases all Netty resources. */
     public void stop() {
-        log.info("[" + bridgeName + "] Stopping WebSocket server");
+        log.info("[" + endpoint.getLabel() + "] Stopping WebSocket server");
         if (serverChannel != null) {
             serverChannel.close();
         }

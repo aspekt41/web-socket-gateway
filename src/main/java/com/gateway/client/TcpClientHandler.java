@@ -1,11 +1,9 @@
 package com.gateway.client;
 
-import com.gateway.bridge.ChannelBridge;
+import com.gateway.connection.TcpClientEndpoint;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
-import io.netty.channel.group.ChannelGroup;
-import io.netty.handler.codec.http.websocketx.BinaryWebSocketFrame;
 
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -13,49 +11,43 @@ import java.util.logging.Logger;
 /**
  * Handles inbound data from the remote TCP server.
  *
- * <p>In this first iteration the handler logs received bytes.  Forwarding
- * to WebSocket clients will be wired in a future bridge iteration.
+ * <p>Registers and deregisters the live TCP channel on the {@link TcpClientEndpoint},
+ * and forwards inbound bytes to all of the endpoint's targets via
+ * {@link TcpClientEndpoint#onDataReceived(ByteBuf)}.
  */
 public class TcpClientHandler extends ChannelInboundHandlerAdapter {
 
     private static final Logger log = Logger.getLogger(TcpClientHandler.class.getName());
 
     private final TcpClient owner;
-    private final ChannelBridge session;
+    private final TcpClientEndpoint endpoint;
 
-    public TcpClientHandler(String bridgeName, TcpClient owner, ChannelBridge session) {
-        this.owner = owner;
-        this.session = session;
+    public TcpClientHandler(TcpClient owner, TcpClientEndpoint endpoint) {
+        this.owner    = owner;
+        this.endpoint = endpoint;
     }
 
     @Override
     public void channelActive(ChannelHandlerContext ctx) {
-        session.setTcpChannel(ctx.channel());
-        log.info("[" + session.getName() + "] TCP connection established to " + ctx.channel().remoteAddress());
+        endpoint.setChannel(ctx.channel());
+        log.info("[" + endpoint.getLabel() + "] TCP connection established to "
+                + ctx.channel().remoteAddress());
     }
 
     @Override
     public void channelRead(ChannelHandlerContext ctx, Object msg) {
         ByteBuf buf = (ByteBuf) msg;
-        ChannelGroup wsChannels = session.getWebsocketChannels();
-        if (wsChannels.isEmpty()) {
-            log.fine("[" + session.getName() + "] TCP data received but no WS clients connected; dropping "
-                    + buf.readableBytes() + " bytes");
-            buf.release();
-            return;
-        }
-        log.fine("[" + session.getName() + "] Received " + buf.readableBytes()
-                + " bytes from TCP server, forwarding to " + wsChannels.size() + " WS client(s)");
-        // BinaryWebSocketFrame takes ownership of buf. DefaultChannelGroup.writeAndFlush
-        // retains the frame once per additional channel before writing, then each
-        // channel's pipeline releases after the write completes. Net: zero leaks.
-        wsChannels.writeAndFlush(new BinaryWebSocketFrame(buf));
+        log.fine("[" + endpoint.getLabel() + "] Received " + buf.readableBytes()
+                + " bytes from TCP server, forwarding to targets");
+        // Transfer ownership of buf to onDataReceived; it fans out to targets or
+        // releases immediately if there are none.
+        endpoint.onDataReceived(buf);
     }
 
     @Override
     public void channelInactive(ChannelHandlerContext ctx) {
-        session.clearTcpChannel();
-        log.warning("[" + session.getName() + "] TCP connection lost (remote: "
+        endpoint.clearChannel();
+        log.warning("[" + endpoint.getLabel() + "] TCP connection lost (remote: "
                 + ctx.channel().remoteAddress()
                 + "), scheduling reconnect in " + owner.getReconnectDelaySeconds() + "s");
         owner.scheduleReconnect(ctx.channel().eventLoop());
@@ -63,7 +55,7 @@ public class TcpClientHandler extends ChannelInboundHandlerAdapter {
 
     @Override
     public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) {
-        log.log(Level.SEVERE, "[" + session.getName() + "] Exception on TCP channel "
+        log.log(Level.SEVERE, "[" + endpoint.getLabel() + "] Exception on TCP channel "
                 + ctx.channel().remoteAddress(), cause);
         ctx.close();
     }

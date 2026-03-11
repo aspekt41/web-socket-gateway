@@ -1,6 +1,6 @@
 package com.gateway.client;
 
-import com.gateway.bridge.ChannelBridge;
+import com.gateway.connection.TcpClientEndpoint;
 import com.gateway.config.TcpClientConfig;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.*;
@@ -18,12 +18,12 @@ import java.util.logging.Logger;
  * <p>The client connects to the configured remote host:port and automatically
  * reconnects after a configurable delay whenever the connection is lost.
  *
- * <p>Pipeline (first iteration — plain bytes, no framing):
+ * <p>Pipeline (plain bytes, no framing):
  * <pre>
- *   TcpClientHandler  (application logic / logging)
+ *   TcpClientHandler  (registers channel on endpoint, forwards inbound data)
  * </pre>
  * Frame decoders (line, length-prefixed, etc.) can be inserted into the
- * pipeline in a later iteration.
+ * pipeline as needed.
  *
  * <p>Call {@link #start()} to initiate the first connection attempt.
  * Call {@link #stop()} (or close via try-with-resources) to disconnect and
@@ -33,19 +33,17 @@ public class TcpClient implements AutoCloseable {
 
     private static final Logger log = Logger.getLogger(TcpClient.class.getName());
 
-    private final String bridgeName;
     private final TcpClientConfig config;
-    private final ChannelBridge session;
+    private final TcpClientEndpoint endpoint;
 
     private EventLoopGroup eventLoopGroup;
     private Bootstrap bootstrap;
     private volatile Channel channel;
     private final AtomicBoolean stopped = new AtomicBoolean(false);
 
-    public TcpClient(String bridgeName, TcpClientConfig config, ChannelBridge session) {
-        this.bridgeName = bridgeName;
-        this.config = config;
-        this.session = session;
+    public TcpClient(TcpClientConfig config, TcpClientEndpoint endpoint) {
+        this.config   = config;
+        this.endpoint = endpoint;
     }
 
     /**
@@ -64,10 +62,7 @@ public class TcpClient implements AutoCloseable {
                 .handler(new ChannelInitializer<SocketChannel>() {
                     @Override
                     protected void initChannel(SocketChannel ch) {
-                        ChannelPipeline p = ch.pipeline();
-                        // TODO (bridge iteration): add frame decoder here, e.g.
-                        //   p.addLast(new LineBasedFrameDecoder(8192));
-                        p.addLast(new TcpClientHandler(bridgeName, TcpClient.this, session));
+                        ch.pipeline().addLast(new TcpClientHandler(TcpClient.this, endpoint));
                     }
                 });
 
@@ -77,7 +72,7 @@ public class TcpClient implements AutoCloseable {
     /** Gracefully closes the connection and shuts down the event loop group. */
     public void stop() {
         if (stopped.compareAndSet(false, true)) {
-            log.info("[" + bridgeName + "] Stopping TCP client");
+            log.info("[" + endpoint.getLabel() + "] Stopping TCP client");
             if (channel != null) {
                 channel.close();
             }
@@ -108,7 +103,7 @@ public class TcpClient implements AutoCloseable {
             return;
         }
         long delaySeconds = config.getReconnectDelaySeconds();
-        log.info("[" + bridgeName + "] Reconnecting to "
+        log.info("[" + endpoint.getLabel() + "] Reconnecting to "
                 + config.getHost() + ":" + config.getPort() + " in " + delaySeconds + "s");
         eventLoop.schedule(this::connect, delaySeconds, TimeUnit.SECONDS);
     }
@@ -121,16 +116,17 @@ public class TcpClient implements AutoCloseable {
         if (stopped.get()) {
             return;
         }
-        log.info("[" + bridgeName + "] Connecting to " + config.getHost() + ":" + config.getPort());
+        log.info("[" + endpoint.getLabel() + "] Connecting to "
+                + config.getHost() + ":" + config.getPort());
 
         bootstrap.connect(config.getHost(), config.getPort())
                 .addListener((ChannelFutureListener) future -> {
                     if (future.isSuccess()) {
                         channel = future.channel();
-                        log.info("[" + bridgeName + "] Connected to "
+                        log.info("[" + endpoint.getLabel() + "] Connected to "
                                 + config.getHost() + ":" + config.getPort());
                     } else {
-                        log.warning("[" + bridgeName + "] Connection to "
+                        log.warning("[" + endpoint.getLabel() + "] Connection to "
                                 + config.getHost() + ":" + config.getPort()
                                 + " failed: " + future.cause().getMessage()
                                 + ". Retrying in " + config.getReconnectDelaySeconds() + "s");

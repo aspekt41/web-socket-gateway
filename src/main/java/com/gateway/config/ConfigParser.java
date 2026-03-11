@@ -50,7 +50,9 @@ public final class ConfigParser {
             Unmarshaller um = ctx.createUnmarshaller();
             um.setSchema(schema);  // validation happens during unmarshal
             GatewayConfig config = (GatewayConfig) um.unmarshal(configFile);
-            log.info("Loaded " + config.getBridges().size() + " bridge(s)");
+            log.info("Loaded " + config.getWebSocketServers().size() + " websocket-server(s), "
+                    + config.getTcpClients().size() + " tcp-client(s), "
+                    + config.getForwards().size() + " forward rule(s)");
             return config;
         } catch (JAXBException e) {
             throw new ConfigException(

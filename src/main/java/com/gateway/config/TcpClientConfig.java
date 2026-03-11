@@ -12,6 +12,9 @@ import jakarta.xml.bind.annotation.XmlAttribute;
 @XmlAccessorType(XmlAccessType.FIELD)
 public class TcpClientConfig {
 
+    @XmlAttribute(name = "label", required = true)
+    private String label;
+
     @XmlAttribute(name = "host", required = true)
     private String host;
 
@@ -24,6 +27,7 @@ public class TcpClientConfig {
     @XmlAttribute(name = "connect-timeout-seconds")
     private int connectTimeoutSeconds = 10;
 
+    public String getLabel() { return label; }
     public String getHost() { return host; }
     public int getPort() { return port; }
     public int getReconnectDelaySeconds() { return reconnectDelaySeconds; }
@@ -31,7 +35,8 @@ public class TcpClientConfig {
 
     @Override
     public String toString() {
-        return "TcpClientConfig{host='" + host
+        return "TcpClientConfig{label='" + label
+                + "', host='" + host
                 + "', port=" + port
                 + ", reconnectDelaySeconds=" + reconnectDelaySeconds
                 + ", connectTimeoutSeconds=" + connectTimeoutSeconds + "}";

@@ -1,6 +1,7 @@
 package com.gateway.server;
 
-import com.gateway.bridge.ChannelBridge;
+import com.gateway.connection.TcpClientEndpoint;
+import com.gateway.connection.WebSocketEndpoint;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import io.netty.channel.embedded.EmbeddedChannel;
@@ -17,21 +18,27 @@ import static org.junit.jupiter.api.Assertions.*;
 /**
  * Unit tests for WebSocketServerHandler using EmbeddedChannel for synchronous I/O.
  *
- * <p>A second EmbeddedChannel acts as the fake TCP upstream so we can inspect
- * what the handler writes there without any real sockets.
+ * <p>A {@link TcpClientEndpoint} backed by a fake TCP {@link EmbeddedChannel} acts
+ * as the downstream target so we can inspect what the handler forwards without any
+ * real sockets.
  */
 class WebSocketServerHandlerTest {
 
-    private ChannelBridge session;
-    private EmbeddedChannel tcpChannel;   // fake TCP upstream
-    private EmbeddedChannel wsChannel;    // channel under test
+    private TcpClientEndpoint tcpEndpoint; // downstream target
+    private EmbeddedChannel   tcpChannel;  // fake TCP channel
+    private WebSocketEndpoint wsEndpoint;  // endpoint under test
+    private EmbeddedChannel   wsChannel;   // WS channel under test
 
     @BeforeEach
     void setUp() {
-        session = new ChannelBridge("test");
-        tcpChannel = new EmbeddedChannel();
-        session.setTcpChannel(tcpChannel);
-        wsChannel = new EmbeddedChannel(new WebSocketServerHandler("test", session));
+        tcpEndpoint = new TcpClientEndpoint("tcp-test");
+        tcpChannel  = new EmbeddedChannel();
+        tcpEndpoint.setChannel(tcpChannel);
+
+        wsEndpoint = new WebSocketEndpoint("ws-test");
+        wsEndpoint.addTarget(tcpEndpoint);
+
+        wsChannel = new EmbeddedChannel(new WebSocketServerHandler(wsEndpoint));
     }
 
     @AfterEach
@@ -46,10 +53,10 @@ class WebSocketServerHandlerTest {
     // -----------------------------------------------------------------------
 
     @Test
-    void channelActiveRegistersWsChannelInSession() {
-        // channelActive fires during EmbeddedChannel construction in setUp
-        assertEquals(1, session.getWebsocketChannels().size());
-        assertTrue(session.getWebsocketChannels().contains(wsChannel));
+    void channelActiveRegistersWsChannelInEndpoint() {
+        // channelActive fires during EmbeddedChannel construction in setUp.
+        // The ws endpoint has the tcp endpoint as its target (wired in setUp).
+        assertTrue(wsEndpoint.getTargets().contains(tcpEndpoint));
     }
 
     // -----------------------------------------------------------------------
@@ -84,7 +91,7 @@ class WebSocketServerHandlerTest {
 
     @Test
     void frameDroppedWithoutExceptionWhenTcpChannelIsNull() {
-        session.clearTcpChannel();
+        tcpEndpoint.clearChannel();
         assertDoesNotThrow(() ->
                 wsChannel.writeInbound(new BinaryWebSocketFrame(Unpooled.copiedBuffer(new byte[]{(byte) 0xAA}))));
         // Nothing should arrive at the TCP side
@@ -94,7 +101,7 @@ class WebSocketServerHandlerTest {
     @Test
     void frameDroppedWithoutExceptionWhenTcpChannelIsClosed() throws Exception {
         tcpChannel.close().sync();
-        // session still holds the closed channel reference; handler checks isActive()
+        // endpoint still holds the closed channel reference; send() checks isActive()
         assertDoesNotThrow(() ->
                 wsChannel.writeInbound(new BinaryWebSocketFrame(Unpooled.copiedBuffer(new byte[]{(byte) 0xBB}))));
         assertNull(tcpChannel.readOutbound());

@@ -1,8 +1,7 @@
 package com.gateway.server;
 
-import com.gateway.bridge.ChannelBridge;
+import com.gateway.connection.WebSocketEndpoint;
 import io.netty.buffer.ByteBuf;
-import io.netty.channel.Channel;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
 import io.netty.handler.codec.http.websocketx.*;
@@ -13,75 +12,60 @@ import java.util.logging.Logger;
 /**
  * Handles inbound WebSocket frames from a connected browser / JS client.
  *
- * <p>In this first iteration the handler logs activity and echoes text frames
- * back to the sender.  Bridging to the TCP client will be wired in a future
- * iteration once both ends are stable.
+ * <p>Binary and text frames are forwarded to all registered targets of the
+ * {@link WebSocketEndpoint} via {@link WebSocketEndpoint#onDataReceived(ByteBuf)}.
+ * Ping frames receive a Pong reply.  Close frames close the channel.
  */
 public class WebSocketServerHandler extends SimpleChannelInboundHandler<WebSocketFrame> {
 
     private static final Logger log = Logger.getLogger(WebSocketServerHandler.class.getName());
 
-    private final String bridgeName;
-    private final ChannelBridge session;
+    private final WebSocketEndpoint endpoint;
 
-    public WebSocketServerHandler(String bridgeName, ChannelBridge session) {
-        this.bridgeName = bridgeName;
-        this.session = session;
+    public WebSocketServerHandler(WebSocketEndpoint endpoint) {
+        this.endpoint = endpoint;
     }
 
     @Override
     public void channelActive(ChannelHandlerContext ctx) {
-        session.addWebsocketChannel(ctx.channel());
-        log.info("[" + bridgeName + "] WebSocket client connected: " + ctx.channel().remoteAddress());
+        endpoint.addChannel(ctx.channel());
+        log.info("[" + endpoint.getLabel() + "] WebSocket client connected: "
+                + ctx.channel().remoteAddress());
     }
 
     @Override
     public void channelInactive(ChannelHandlerContext ctx) {
-        log.info("[" + bridgeName + "] WebSocket client disconnected: " + ctx.channel().remoteAddress());
+        log.info("[" + endpoint.getLabel() + "] WebSocket client disconnected: "
+                + ctx.channel().remoteAddress());
     }
 
     @Override
     protected void channelRead0(ChannelHandlerContext ctx, WebSocketFrame frame) {
         if (frame instanceof TextWebSocketFrame || frame instanceof BinaryWebSocketFrame) {
             ByteBuf payload = frame.content();
-            log.fine("[" + bridgeName + "] Received "
+            log.fine("[" + endpoint.getLabel() + "] Received "
                     + (frame instanceof TextWebSocketFrame ? "text" : "binary")
-                    + " frame (" + payload.readableBytes() + " bytes), forwarding to TCP");
-            forwardToTcp(payload);
+                    + " frame (" + payload.readableBytes() + " bytes), forwarding to targets");
+            // retain() because SimpleChannelInboundHandler releases the frame after
+            // channelRead0 returns; onDataReceived takes ownership of the retained ref.
+            endpoint.onDataReceived(payload.retain());
 
         } else if (frame instanceof PingWebSocketFrame) {
             ctx.writeAndFlush(new PongWebSocketFrame(frame.content().retain()));
 
         } else if (frame instanceof CloseWebSocketFrame) {
-            log.info("[" + bridgeName + "] Received close frame, closing channel");
+            log.info("[" + endpoint.getLabel() + "] Received close frame, closing channel");
             ctx.close();
 
         } else {
-            log.warning("[" + bridgeName + "] Unhandled frame type: " + frame.getClass().getSimpleName());
+            log.warning("[" + endpoint.getLabel() + "] Unhandled frame type: "
+                    + frame.getClass().getSimpleName());
         }
-    }
-
-    private void forwardToTcp(ByteBuf payload) {
-        Channel tcpCh = session.getTcpChannel();
-        if (tcpCh == null || !tcpCh.isActive()) {
-            log.warning("[" + bridgeName + "] WS frame received but TCP is disconnected; dropping "
-                    + payload.readableBytes() + " bytes");
-            // SimpleChannelInboundHandler auto-releases the frame after channelRead0 returns.
-            return;
-        }
-        // retain() because SimpleChannelInboundHandler releases the frame after channelRead0
-        // returns, but writeAndFlush is async and needs the buf to outlive this stack frame.
-        tcpCh.writeAndFlush(payload.retain()).addListener(future -> {
-            if (!future.isSuccess()) {
-                log.log(Level.WARNING, "[" + bridgeName + "] Failed to write to TCP channel",
-                        future.cause());
-            }
-        });
     }
 
     @Override
     public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) {
-        log.log(Level.SEVERE, "[" + bridgeName + "] Exception on WebSocket channel "
+        log.log(Level.SEVERE, "[" + endpoint.getLabel() + "] Exception on WebSocket channel "
                 + ctx.channel().remoteAddress(), cause);
         ctx.close();
     }
