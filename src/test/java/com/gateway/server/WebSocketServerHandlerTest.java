@@ -6,6 +6,7 @@ import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import io.netty.channel.embedded.EmbeddedChannel;
 import io.netty.handler.codec.http.websocketx.BinaryWebSocketFrame;
+import io.netty.handler.codec.http.websocketx.CloseWebSocketFrame;
 import io.netty.handler.codec.http.websocketx.PingWebSocketFrame;
 import io.netty.handler.codec.http.websocketx.PongWebSocketFrame;
 import io.netty.handler.codec.http.websocketx.TextWebSocketFrame;
@@ -129,6 +130,41 @@ class WebSocketServerHandlerTest {
 
         // Nothing should have been sent to TCP
         assertNull(tcpChannel.readOutbound());
+    }
+
+    // -----------------------------------------------------------------------
+    // Close frame
+    // -----------------------------------------------------------------------
+
+    @Test
+    void closeFrameCausesChannelToClose() {
+        assertTrue(wsChannel.isActive(), "channel should be active before close frame");
+        wsChannel.writeInbound(new CloseWebSocketFrame());
+        assertFalse(wsChannel.isActive(), "handler should close the channel on CloseWebSocketFrame");
+    }
+
+    @Test
+    void closeFrameDoesNotForwardToTcpChannel() {
+        wsChannel.writeInbound(new CloseWebSocketFrame());
+        assertNull(tcpChannel.readOutbound(), "close frame must not be forwarded to TCP");
+    }
+
+    // -----------------------------------------------------------------------
+    // Unknown / unhandled frame type
+    // -----------------------------------------------------------------------
+
+    @Test
+    void unknownFrameTypeIsDroppedWithoutException() {
+        // PongWebSocketFrame is not handled by the server handler (it handles ping only).
+        // Sending one exercises the final else-branch: log.warning + no forwarding.
+        assertDoesNotThrow(() ->
+                wsChannel.writeInbound(new PongWebSocketFrame(Unpooled.copiedBuffer(new byte[]{0x00}))));
+    }
+
+    @Test
+    void unknownFrameTypeDoesNotForwardToTcpChannel() {
+        wsChannel.writeInbound(new PongWebSocketFrame(Unpooled.copiedBuffer(new byte[]{0x00})));
+        assertNull(tcpChannel.readOutbound(), "unhandled frame must not be forwarded to TCP");
     }
 
     // -----------------------------------------------------------------------

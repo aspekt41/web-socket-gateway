@@ -1,6 +1,7 @@
 plugins {
     java
     application
+    jacoco
 }
 
 group = "com.gateway"
@@ -10,6 +11,10 @@ java {
     toolchain {
         languageVersion = JavaLanguageVersion.of(21)
     }
+}
+
+jacoco {
+    toolVersion = "0.8.12"
 }
 
 application {
@@ -30,4 +35,15 @@ dependencies {
 
 tasks.test {
     useJUnitPlatform()
+    finalizedBy(tasks.jacocoTestReport)
+}
+
+tasks.jacocoTestReport {
+    dependsOn(tasks.test)
+
+    reports {
+        html.required = true
+        xml.required  = true
+        csv.required  = false
+    }
 }
