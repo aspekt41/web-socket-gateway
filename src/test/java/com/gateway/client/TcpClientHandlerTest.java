@@ -169,6 +169,21 @@ class TcpClientHandlerTest {
     }
 
     // -----------------------------------------------------------------------
+    // exceptionCaught
+    // -----------------------------------------------------------------------
+
+    @Test
+    void exceptionCaughtClosesChannel() throws Exception {
+        TcpClientEndpoint endpoint = new TcpClientEndpoint("test");
+        EmbeddedChannel ch = new EmbeddedChannel(
+                new TcpClientHandler(new NoOpTcpClient(endpoint), endpoint));
+
+        assertTrue(ch.isActive());
+        ch.pipeline().fireExceptionCaught(new RuntimeException("simulated TCP error"));
+        assertFalse(ch.isActive(), "exceptionCaught should close the TCP channel");
+    }
+
+    // -----------------------------------------------------------------------
     // Helpers
     // -----------------------------------------------------------------------
 

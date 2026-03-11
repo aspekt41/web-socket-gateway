@@ -168,6 +168,23 @@ class WebSocketServerHandlerTest {
     }
 
     // -----------------------------------------------------------------------
+    // exceptionCaught
+    // -----------------------------------------------------------------------
+
+    @Test
+    void exceptionCaughtClosesChannel() {
+        assertTrue(wsChannel.isActive());
+        wsChannel.pipeline().fireExceptionCaught(new RuntimeException("simulated pipeline error"));
+        assertFalse(wsChannel.isActive(), "exceptionCaught should close the channel");
+    }
+
+    @Test
+    void exceptionCaughtDoesNotForwardToTcpChannel() {
+        wsChannel.pipeline().fireExceptionCaught(new RuntimeException("simulated pipeline error"));
+        assertNull(tcpChannel.readOutbound(), "exception should not cause any data to reach TCP");
+    }
+
+    // -----------------------------------------------------------------------
     // Helpers
     // -----------------------------------------------------------------------
 
