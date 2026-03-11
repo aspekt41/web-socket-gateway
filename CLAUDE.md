@@ -10,6 +10,17 @@ Java 21 application built with Gradle. Use `./gradlew` for all build tasks.
 ./gradlew test         # run tests only
 ```
 
+## Smoke test
+
+After building, verify the application boots correctly:
+
+```bash
+./gradlew installDist
+timeout 10 build/install/web-socket-gateway/bin/web-socket-gateway example-config.xml 2>&1; echo "Exit: $?"
+```
+
+Expected: config loads, WebSocket server and TCP server both log `ACTIVE`/listening lines, TCP client connects to localhost:9090, shutdown hook fires on timeout. Exit code 124 (killed by timeout) is normal.
+
 ## Key facts
 
 - Main entry point: `com.gateway.Main`

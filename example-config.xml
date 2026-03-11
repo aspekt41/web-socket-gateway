@@ -19,6 +19,11 @@
         path="/ws"
         max-frame-bytes="65536"/>
 
+    <tcp-server
+        label="market-data-tcp-server"
+        bind-address="0.0.0.0"
+        port="9090"/>
+
     <tcp-client
         label="market-data-tcp"
         host="localhost"
@@ -27,7 +32,9 @@
         connect-timeout-seconds="10"/>
 
     <!-- Bidirectional forwarding rules -->
-    <forward from="market-data-ws"  to="market-data-tcp"/>
-    <forward from="market-data-tcp" to="market-data-ws"/>
+    <forward from="market-data-ws"         to="market-data-tcp-server"/>
+    <forward from="market-data-tcp-server" to="market-data-ws"/>
+    <forward from="market-data-ws"         to="market-data-tcp"/>
+    <forward from="market-data-tcp"        to="market-data-ws"/>
 
 </gateway-config>
