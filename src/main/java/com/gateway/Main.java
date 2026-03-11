@@ -6,10 +6,13 @@ import com.gateway.config.ConfigParser;
 import com.gateway.config.ForwardConfig;
 import com.gateway.config.GatewayConfig;
 import com.gateway.config.TcpClientConfig;
+import com.gateway.config.TcpServerConfig;
 import com.gateway.config.WebSocketServerConfig;
 import com.gateway.connection.ConnectionEndpoint;
 import com.gateway.connection.TcpClientEndpoint;
+import com.gateway.connection.TcpServerEndpoint;
 import com.gateway.connection.WebSocketEndpoint;
+import com.gateway.server.TcpServer;
 import com.gateway.server.WebSocketServer;
 
 import java.io.File;
@@ -32,7 +35,8 @@ import java.util.logging.Logger;
  * <ol>
  *   <li>Parse and validate the XML configuration file.
  *   <li>Create a labeled {@link ConnectionEndpoint} for every
- *       {@code <websocket-server>} and {@code <tcp-client>} declaration.
+ *       {@code <websocket-server>}, {@code <tcp-server>}, and {@code <tcp-client>}
+ *       declaration.
  *   <li>Wire unidirectional forwarding rules from the {@code <forward>} elements.
  *   <li>Start all servers and clients.
  * </ol>
@@ -69,6 +73,7 @@ public class Main {
         // ----------------------------------------------------------------
         Map<String, ConnectionEndpoint> registry = new LinkedHashMap<>();
         List<WebSocketServer> wsServers  = new ArrayList<>();
+        List<TcpServer>       tcpServers = new ArrayList<>();
         List<TcpClient>       tcpClients = new ArrayList<>();
 
         for (WebSocketServerConfig wsCfg : config.getWebSocketServers()) {
@@ -79,6 +84,16 @@ public class Main {
             WebSocketEndpoint ep = new WebSocketEndpoint(wsCfg.getLabel());
             registry.put(wsCfg.getLabel(), ep);
             wsServers.add(new WebSocketServer(wsCfg, ep));
+        }
+
+        for (TcpServerConfig tcpSrvCfg : config.getTcpServers()) {
+            if (registry.containsKey(tcpSrvCfg.getLabel())) {
+                log.severe("Duplicate label: " + tcpSrvCfg.getLabel());
+                System.exit(1);
+            }
+            TcpServerEndpoint ep = new TcpServerEndpoint(tcpSrvCfg.getLabel());
+            registry.put(tcpSrvCfg.getLabel(), ep);
+            tcpServers.add(new TcpServer(tcpSrvCfg, ep));
         }
 
         for (TcpClientConfig tcpCfg : config.getTcpClients()) {
@@ -112,13 +127,16 @@ public class Main {
         // ----------------------------------------------------------------
         // 3. Start all components
         // ----------------------------------------------------------------
-        if (wsServers.isEmpty()) {
-            log.warning("No websocket-server entries found in config — exiting.");
+        if (wsServers.isEmpty() && tcpServers.isEmpty()) {
+            log.warning("No server entries (websocket-server or tcp-server) found in config — exiting.");
             System.exit(0);
         }
 
         for (WebSocketServer ws : wsServers) {
             ws.start();
+        }
+        for (TcpServer ts : tcpServers) {
+            ts.start();
         }
         for (TcpClient tc : tcpClients) {
             tc.start();
@@ -129,9 +147,14 @@ public class Main {
             log.info("Shutdown hook triggered — stopping all components");
             tcpClients.forEach(TcpClient::stop);
             wsServers.forEach(WebSocketServer::stop);
+            tcpServers.forEach(TcpServer::stop);
         }, "shutdown-hook"));
 
-        // Block the main thread until the first WebSocket server channel closes.
-        wsServers.get(0).awaitShutdown();
+        // Block the main thread until the first server channel closes.
+        if (!wsServers.isEmpty()) {
+            wsServers.get(0).awaitShutdown();
+        } else {
+            tcpServers.get(0).awaitShutdown();
+        }
     }
 }

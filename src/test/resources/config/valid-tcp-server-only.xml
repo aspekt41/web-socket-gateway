@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Config with tcp-server only — no websocket-server required. -->
+<gateway-config xmlns="http://github.com/web-socket-gateway/config/v1">
+    <tcp-server label="raw-tcp-in" port="7001"/>
+    <tcp-client label="backend"    host="localhost" port="9090"/>
+    <forward from="raw-tcp-in" to="backend"/>
+    <forward from="backend"    to="raw-tcp-in"/>
+</gateway-config>

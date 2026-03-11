@@ -32,6 +32,9 @@ public class GatewayConfig {
         @XmlElement(name = "tcp-client",
                     type = TcpClientConfig.class,
                     namespace = NAMESPACE),
+        @XmlElement(name = "tcp-server",
+                    type = TcpServerConfig.class,
+                    namespace = NAMESPACE),
         @XmlElement(name = "forward",
                     type = ForwardConfig.class,
                     namespace = NAMESPACE)
@@ -54,6 +57,14 @@ public class GatewayConfig {
                 .collect(Collectors.toList());
     }
 
+    /** Returns all {@code <tcp-server>} entries in document order. */
+    public List<TcpServerConfig> getTcpServers() {
+        return elements.stream()
+                .filter(e -> e instanceof TcpServerConfig)
+                .map(e -> (TcpServerConfig) e)
+                .collect(Collectors.toList());
+    }
+
     /** Returns all {@code <forward>} rules in document order. */
     public List<ForwardConfig> getForwards() {
         return elements.stream()
@@ -66,6 +77,7 @@ public class GatewayConfig {
     public String toString() {
         return "GatewayConfig{webSocketServers=" + getWebSocketServers()
                 + ", tcpClients=" + getTcpClients()
+                + ", tcpServers=" + getTcpServers()
                 + ", forwards=" + getForwards() + "}";
     }
 }
