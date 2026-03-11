@@ -154,6 +154,25 @@ class ConfigParserTest {
     }
 
     // -----------------------------------------------------------------------
+    // Happy-path: valid-tcp-server-only.xml — tcp-server without websocket-server
+    // -----------------------------------------------------------------------
+
+    @Test
+    void parsesTcpServerOnlyConfig() throws Exception {
+        GatewayConfig cfg = ConfigParser.parse(fixture("valid-tcp-server-only.xml"));
+
+        assertEquals(0, cfg.getWebSocketServers().size());
+        assertEquals(1, cfg.getTcpServers().size());
+        TcpServerConfig ts = cfg.getTcpServers().get(0);
+        assertEquals("raw-tcp-in", ts.getLabel());
+        assertEquals("0.0.0.0",    ts.getBindAddress(), "bind-address should default to 0.0.0.0");
+        assertEquals(7001,         ts.getPort());
+
+        assertEquals(1, cfg.getTcpClients().size());
+        assertEquals(2, cfg.getForwards().size());
+    }
+
+    // -----------------------------------------------------------------------
     // Error cases: schema validation must reject invalid documents
     // -----------------------------------------------------------------------
 

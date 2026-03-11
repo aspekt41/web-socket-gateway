@@ -33,6 +33,7 @@
         <xs:choice minOccurs="0" maxOccurs="unbounded">
             <xs:element name="websocket-server" type="tns:WebSocketServerType"/>
             <xs:element name="tcp-client"       type="tns:TcpClientType"/>
+            <xs:element name="tcp-server"       type="tns:TcpServerType"/>
             <xs:element name="forward"          type="tns:ForwardType"/>
         </xs:choice>
     </xs:complexType>
@@ -89,6 +90,25 @@
         <xs:attribute name="port"                    type="tns:PortType"       use="required"/>
         <xs:attribute name="reconnect-delay-seconds" type="xs:positiveInteger" default="5"/>
         <xs:attribute name="connect-timeout-seconds" type="xs:positiveInteger" default="10"/>
+    </xs:complexType>
+
+    <!-- ================================================================== -->
+    <!-- TCP server endpoint                                                  -->
+    <!-- ================================================================== -->
+    <xs:complexType name="TcpServerType">
+        <xs:annotation>
+            <xs:documentation>
+                Configures an inbound raw TCP server. Clients connect on a plain
+                TCP socket with no HTTP/WebSocket overhead.
+
+                label        - Unique name used in forward rules (required).
+                bind-address - IP address to listen on; defaults to 0.0.0.0.
+                port         - TCP port to listen on (required).
+            </xs:documentation>
+        </xs:annotation>
+        <xs:attribute name="label"        type="xs:string"    use="required"/>
+        <xs:attribute name="bind-address" type="xs:string"    default="0.0.0.0"/>
+        <xs:attribute name="port"         type="tns:PortType" use="required"/>
     </xs:complexType>
 
     <!-- ================================================================== -->
