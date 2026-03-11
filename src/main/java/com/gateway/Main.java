@@ -1,17 +1,18 @@
 package com.gateway;
 
-import com.gateway.bridge.BridgeSession;
+import com.gateway.bridge.ChannelBridge;
 import com.gateway.client.TcpClient;
 import com.gateway.config.BridgeConfig;
 import com.gateway.config.ConfigException;
 import com.gateway.config.ConfigParser;
 import com.gateway.config.GatewayConfig;
 import com.gateway.server.WebSocketServer;
+
 import java.io.File;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  * Application entry point.
@@ -67,7 +68,7 @@ public class Main {
 
             log.info("Starting bridge: " + bridge.getName());
 
-            BridgeSession session = new BridgeSession(bridge.getName());
+            ChannelBridge session = new ChannelBridge(bridge.getName());
 
             WebSocketServer wsServer =
                     new WebSocketServer(bridge.getName(), bridge.getWebSocketServer(), session);

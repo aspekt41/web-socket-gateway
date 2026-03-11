@@ -1,6 +1,6 @@
 package com.gateway.client;
 
-import com.gateway.bridge.BridgeSession;
+import com.gateway.bridge.ChannelBridge;
 import com.gateway.config.TcpClientConfig;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
@@ -30,7 +30,7 @@ class TcpClientHandlerTest {
     private static class NoOpTcpClient extends TcpClient {
         volatile int reconnectCount = 0;
 
-        NoOpTcpClient(BridgeSession session) throws Exception {
+        NoOpTcpClient(ChannelBridge session) throws Exception {
             super("test", minimalConfig(), session);
         }
 
@@ -60,7 +60,7 @@ class TcpClientHandlerTest {
 
     @Test
     void channelActiveSetsTcpChannelOnSession() throws Exception {
-        BridgeSession session = new BridgeSession("test");
+        ChannelBridge session = new ChannelBridge("test");
         EmbeddedChannel ch = new EmbeddedChannel(
                 new TcpClientHandler("test", new NoOpTcpClient(session), session));
 
@@ -77,7 +77,7 @@ class TcpClientHandlerTest {
 
     @Test
     void channelInactiveClearsTcpChannelOnSession() throws Exception {
-        BridgeSession session = new BridgeSession("test");
+        ChannelBridge session = new ChannelBridge("test");
         EmbeddedChannel ch = new EmbeddedChannel(
                 new TcpClientHandler("test", new NoOpTcpClient(session), session));
 
@@ -88,7 +88,7 @@ class TcpClientHandlerTest {
 
     @Test
     void channelInactiveSchedulesOneReconnect() throws Exception {
-        BridgeSession session = new BridgeSession("test");
+        ChannelBridge session = new ChannelBridge("test");
         NoOpTcpClient stub = new NoOpTcpClient(session);
         EmbeddedChannel ch = new EmbeddedChannel(
                 new TcpClientHandler("test", stub, session));
@@ -104,7 +104,7 @@ class TcpClientHandlerTest {
 
     @Test
     void tcpDataForwardedToAllWsClientsAsBinaryFrame() throws Exception {
-        BridgeSession session = new BridgeSession("test");
+        ChannelBridge session = new ChannelBridge("test");
 
         // Register two fake WebSocket client channels.
         // Distinct ChannelIds are required: EmbeddedChannel() (no-arg) uses
@@ -112,8 +112,8 @@ class TcpClientHandlerTest {
         // DefaultChannelGroup to treat both channels as the same entry.
         EmbeddedChannel wsClient1 = new EmbeddedChannel(DefaultChannelId.newInstance());
         EmbeddedChannel wsClient2 = new EmbeddedChannel(DefaultChannelId.newInstance());
-        session.addWsChannel(wsClient1);
-        session.addWsChannel(wsClient2);
+        session.addWebsocketChannel(wsClient1);
+        session.addWebsocketChannel(wsClient2);
 
         EmbeddedChannel tcpCh = new EmbeddedChannel(
                 new TcpClientHandler("test", new NoOpTcpClient(session), session));
@@ -139,7 +139,7 @@ class TcpClientHandlerTest {
 
     @Test
     void tcpDataDroppedWhenNoWsClients() throws Exception {
-        BridgeSession session = new BridgeSession("test");
+        ChannelBridge session = new ChannelBridge("test");
         EmbeddedChannel ch = new EmbeddedChannel(
                 new TcpClientHandler("test", new NoOpTcpClient(session), session));
 

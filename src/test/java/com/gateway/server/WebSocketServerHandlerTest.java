@@ -1,6 +1,6 @@
 package com.gateway.server;
 
-import com.gateway.bridge.BridgeSession;
+import com.gateway.bridge.ChannelBridge;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import io.netty.channel.embedded.EmbeddedChannel;
@@ -22,13 +22,13 @@ import static org.junit.jupiter.api.Assertions.*;
  */
 class WebSocketServerHandlerTest {
 
-    private BridgeSession session;
+    private ChannelBridge session;
     private EmbeddedChannel tcpChannel;   // fake TCP upstream
     private EmbeddedChannel wsChannel;    // channel under test
 
     @BeforeEach
     void setUp() {
-        session = new BridgeSession("test");
+        session = new ChannelBridge("test");
         tcpChannel = new EmbeddedChannel();
         session.setTcpChannel(tcpChannel);
         wsChannel = new EmbeddedChannel(new WebSocketServerHandler("test", session));
@@ -48,8 +48,8 @@ class WebSocketServerHandlerTest {
     @Test
     void channelActiveRegistersWsChannelInSession() {
         // channelActive fires during EmbeddedChannel construction in setUp
-        assertEquals(1, session.getWsChannels().size());
-        assertTrue(session.getWsChannels().contains(wsChannel));
+        assertEquals(1, session.getWebsocketChannels().size());
+        assertTrue(session.getWebsocketChannels().contains(wsChannel));
     }
 
     // -----------------------------------------------------------------------

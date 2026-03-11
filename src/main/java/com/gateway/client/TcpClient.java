@@ -1,23 +1,16 @@
 package com.gateway.client;
 
-import com.gateway.bridge.BridgeSession;
+import com.gateway.bridge.ChannelBridge;
 import com.gateway.config.TcpClientConfig;
 import io.netty.bootstrap.Bootstrap;
-import io.netty.channel.Channel;
-import io.netty.channel.ChannelFuture;
-import io.netty.channel.ChannelFutureListener;
-import io.netty.channel.ChannelInitializer;
-import io.netty.channel.ChannelOption;
-import io.netty.channel.ChannelPipeline;
-import io.netty.channel.EventLoop;
-import io.netty.channel.EventLoopGroup;
+import io.netty.channel.*;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioSocketChannel;
+
 import java.util.concurrent.TimeUnit;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.logging.Logger;
 
 /**
  * Netty-based outbound TCP client.
@@ -42,14 +35,14 @@ public class TcpClient implements AutoCloseable {
 
     private final String bridgeName;
     private final TcpClientConfig config;
-    private final BridgeSession session;
+    private final ChannelBridge session;
 
     private EventLoopGroup eventLoopGroup;
     private Bootstrap bootstrap;
     private volatile Channel channel;
     private final AtomicBoolean stopped = new AtomicBoolean(false);
 
-    public TcpClient(String bridgeName, TcpClientConfig config, BridgeSession session) {
+    public TcpClient(String bridgeName, TcpClientConfig config, ChannelBridge session) {
         this.bridgeName = bridgeName;
         this.config = config;
         this.session = session;

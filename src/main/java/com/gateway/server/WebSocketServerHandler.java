@@ -1,16 +1,12 @@
 package com.gateway.server;
 
-import com.gateway.bridge.BridgeSession;
+import com.gateway.bridge.ChannelBridge;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
-import io.netty.handler.codec.http.websocketx.BinaryWebSocketFrame;
-import io.netty.handler.codec.http.websocketx.CloseWebSocketFrame;
-import io.netty.handler.codec.http.websocketx.PingWebSocketFrame;
-import io.netty.handler.codec.http.websocketx.PongWebSocketFrame;
-import io.netty.handler.codec.http.websocketx.TextWebSocketFrame;
-import io.netty.handler.codec.http.websocketx.WebSocketFrame;
+import io.netty.handler.codec.http.websocketx.*;
+
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -26,16 +22,16 @@ public class WebSocketServerHandler extends SimpleChannelInboundHandler<WebSocke
     private static final Logger log = Logger.getLogger(WebSocketServerHandler.class.getName());
 
     private final String bridgeName;
-    private final BridgeSession session;
+    private final ChannelBridge session;
 
-    public WebSocketServerHandler(String bridgeName, BridgeSession session) {
+    public WebSocketServerHandler(String bridgeName, ChannelBridge session) {
         this.bridgeName = bridgeName;
         this.session = session;
     }
 
     @Override
     public void channelActive(ChannelHandlerContext ctx) {
-        session.addWsChannel(ctx.channel());
+        session.addWebsocketChannel(ctx.channel());
         log.info("[" + bridgeName + "] WebSocket client connected: " + ctx.channel().remoteAddress());
     }
 

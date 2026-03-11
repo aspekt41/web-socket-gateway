@@ -17,33 +17,33 @@ import io.netty.util.concurrent.GlobalEventExecutor;
  *       disconnected).
  * </ul>
  */
-public final class BridgeSession {
+public final class ChannelBridge {
 
-    private final String bridgeName;
+    private final String name;
 
-    private final ChannelGroup wsChannels =
+    private final ChannelGroup websocketChannels =
             new DefaultChannelGroup(GlobalEventExecutor.INSTANCE);
 
     private volatile Channel tcpChannel;
 
-    public BridgeSession(String bridgeName) {
-        this.bridgeName = bridgeName;
+    public ChannelBridge(String name) {
+        this.name = name;
     }
 
-    public String getBridgeName() {
-        return bridgeName;
+    public String getName() {
+        return name;
     }
 
     // ---- WebSocket channel registry ----------------------------------------
 
     /** Called by WebSocketServerHandler.channelActive. */
-    public void addWsChannel(Channel ch) {
-        wsChannels.add(ch);
+    public void addWebsocketChannel(Channel ch) {
+        websocketChannels.add(ch);
     }
 
     /** Returns the live group; callers use it to broadcast frames. */
-    public ChannelGroup getWsChannels() {
-        return wsChannels;
+    public ChannelGroup getWebsocketChannels() {
+        return websocketChannels;
     }
 
     // ---- TCP channel registry -----------------------------------------------

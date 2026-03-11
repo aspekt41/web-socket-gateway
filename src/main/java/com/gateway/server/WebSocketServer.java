@@ -1,14 +1,9 @@
 package com.gateway.server;
 
-import com.gateway.bridge.BridgeSession;
+import com.gateway.bridge.ChannelBridge;
 import com.gateway.config.WebSocketServerConfig;
 import io.netty.bootstrap.ServerBootstrap;
-import io.netty.channel.Channel;
-import io.netty.channel.ChannelFuture;
-import io.netty.channel.ChannelInitializer;
-import io.netty.channel.ChannelOption;
-import io.netty.channel.ChannelPipeline;
-import io.netty.channel.EventLoopGroup;
+import io.netty.channel.*;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
@@ -18,8 +13,8 @@ import io.netty.handler.codec.http.websocketx.WebSocketServerProtocolHandler;
 import io.netty.handler.codec.http.websocketx.extensions.compression.WebSocketServerCompressionHandler;
 import io.netty.handler.logging.LogLevel;
 import io.netty.handler.logging.LoggingHandler;
+
 import java.net.InetSocketAddress;
-import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
@@ -46,13 +41,13 @@ public class WebSocketServer implements AutoCloseable {
 
     private final String bridgeName;
     private final WebSocketServerConfig config;
-    private final BridgeSession session;
+    private final ChannelBridge session;
 
     private EventLoopGroup bossGroup;
     private EventLoopGroup workerGroup;
     private Channel serverChannel;
 
-    public WebSocketServer(String bridgeName, WebSocketServerConfig config, BridgeSession session) {
+    public WebSocketServer(String bridgeName, WebSocketServerConfig config, ChannelBridge session) {
         this.bridgeName = bridgeName;
         this.config = config;
         this.session = session;

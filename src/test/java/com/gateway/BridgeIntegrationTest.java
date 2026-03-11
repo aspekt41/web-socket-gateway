@@ -1,10 +1,10 @@
 package com.gateway;
 
-import com.gateway.bridge.BridgeSession;
+import com.gateway.bridge.ChannelBridge;
+import com.gateway.client.TcpClient;
 import com.gateway.config.BridgeConfig;
 import com.gateway.config.ConfigParser;
 import com.gateway.config.GatewayConfig;
-import com.gateway.client.TcpClient;
 import com.gateway.server.WebSocketServer;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.Timeout;
@@ -24,7 +24,8 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
  * End-to-end integration test for the TCP↔WebSocket bridge.
@@ -34,7 +35,7 @@ import static org.junit.jupiter.api.Assertions.*;
  *   <li>A real {@link ServerSocket} acting as the remote TCP service.
  *   <li>A {@link GatewayConfig} parsed from a dynamically-generated XML config.
  *   <li>A real {@link WebSocketServer} and {@link TcpClient} constructed from
- *       that config and sharing a {@link BridgeSession}.
+ *       that config and sharing a {@link ChannelBridge}.
  *   <li>A Java {@link HttpClient}-based WebSocket client connecting to the
  *       gateway's WebSocket server.
  * </ol>
@@ -80,7 +81,7 @@ class BridgeIntegrationTest {
             GatewayConfig config = ConfigParser.parse(configFile);
             BridgeConfig bridge = config.getBridges().get(0);
 
-            BridgeSession session = new BridgeSession(bridge.getName());
+            ChannelBridge session = new ChannelBridge(bridge.getName());
 
             wsServer = new WebSocketServer(bridge.getName(), bridge.getWebSocketServer(), session);
             wsServer.start();

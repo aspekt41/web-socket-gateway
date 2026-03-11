@@ -1,6 +1,6 @@
 # Claude Notes
 
-Java 11 application built with Gradle. Use `./gradlew` for all build tasks.
+Java 21 application built with Gradle. Use `./gradlew` for all build tasks.
 
 ## Common commands
 
