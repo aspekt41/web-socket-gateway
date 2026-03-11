@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Single unidirectional path (WS → TCP only, no return). -->
+<gateway-config xmlns="http://github.com/web-socket-gateway/config/v1">
+    <websocket-server label="ws-send-only" port="9003"/>
+    <tcp-client       label="tcp-recv-only" host="localhost" port="5002"/>
+    <forward from="ws-send-only" to="tcp-recv-only"/>
+</gateway-config>
