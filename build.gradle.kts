@@ -2,7 +2,7 @@ plugins {
     java
     application
     jacoco
-    id("com.gradleup.shadow") version "8.3.6"
+    id("com.gradleup.shadow") version "9.3.2"
 }
 
 group = "com.gateway"
