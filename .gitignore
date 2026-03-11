@@ -1,3 +1,4 @@
 # Gradle build output and cache
 build/
 .gradle/
+/.idea/
