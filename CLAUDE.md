@@ -36,6 +36,12 @@ Always reformat code and run the full test suite before committing:
 Do not commit if any tests fail. Run `spotlessApply` before `test` so that
 formatting changes are included in the same commit as the code changes.
 
+## Architecture documentation
+
+Always update `ARCHITECTURE.md` and `ARCHITECTURE.puml` when making changes that
+affect the structure, startup behaviour, endpoint types, data flow, or wiring of
+the application.  Keep both files in sync with the code.
+
 ## Key facts
 
 - Main entry point: `net.aspekt.gateway.Main`

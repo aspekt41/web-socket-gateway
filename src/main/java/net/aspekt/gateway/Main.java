@@ -150,9 +150,8 @@ public class Main {
         // ----------------------------------------------------------------
         // 3. Start all components
         // ----------------------------------------------------------------
-        if (wsServers.isEmpty() && tcpServers.isEmpty() && tcpHubs.isEmpty() && udpMulticasts.isEmpty()) {
-            log.warning(
-                    "No server entries (websocket-server, tcp-server, tcp-hub, or udp-multicast) found in config — exiting.");
+        if (registry.isEmpty()) {
+            log.warning("No connection entries found in config — exiting.");
             System.exit(0);
         }
 
@@ -192,8 +191,12 @@ public class Main {
             tcpServers.get(0).awaitShutdown();
         } else if (!tcpHubs.isEmpty()) {
             tcpHubs.get(0).awaitShutdown();
-        } else {
+        } else if (!udpMulticasts.isEmpty()) {
             udpMulticasts.get(0).awaitShutdown();
+        } else {
+            // TCP clients only — block the main thread indefinitely; the shutdown hook
+            // handles cleanup and the JVM exits after all hooks complete.
+            new java.util.concurrent.CountDownLatch(1).await();
         }
     }
 }
