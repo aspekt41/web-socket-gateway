@@ -33,7 +33,7 @@ Do not commit if any tests fail.
 
 ## Key facts
 
-- Main entry point: `com.gateway.Main`
+- Main entry point: `net.aspekt.gateway.Main`
 - Config file: XML validated against `src/main/resources/gateway-config.xsd`
 - No Spring, no DI framework — plain Java with Netty for I/O
 - Logging: `java.util.logging` (JUL) only, no SLF4J or Logback
