@@ -6,6 +6,7 @@ import net.aspekt.gateway.ForwardConfig;
 import net.aspekt.gateway.GatewayConfig;
 import net.aspekt.gateway.tcp.client.TcpClientConfig;
 import net.aspekt.gateway.tcp.server.TcpServerConfig;
+import net.aspekt.gateway.udp.multicast.UdpMulticastConfig;
 import net.aspekt.gateway.websocket.WebSocketServerConfig;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
@@ -177,6 +178,49 @@ class ConfigParserTest {
 
         assertEquals(1, cfg.getTcpClients().size());
         assertEquals(2, cfg.getForwards().size());
+    }
+
+    // -----------------------------------------------------------------------
+    // Error cases: schema validation must reject invalid documents
+    // -----------------------------------------------------------------------
+
+    // -----------------------------------------------------------------------
+    // Happy-path: valid-udp-multicast.xml — all attributes explicit
+    // -----------------------------------------------------------------------
+
+    @Test
+    void parsesUdpMulticastWithAllAttributes() throws Exception {
+        GatewayConfig cfg = ConfigParser.parse(fixture("valid-udp-multicast.xml"));
+
+        assertEquals(1, cfg.getUdpMulticasts().size());
+        UdpMulticastConfig um = cfg.getUdpMulticasts().get(0);
+        assertEquals("mcast-feed",  um.getLabel());
+        assertEquals("230.0.0.1",   um.getGroup());
+        assertEquals(4001,           um.getPort());
+        assertEquals("0.0.0.0",     um.getBindAddress());
+        assertEquals("lo",          um.getNetworkInterface());
+
+        assertEquals(1, cfg.getTcpClients().size());
+        assertEquals(2, cfg.getForwards().size());
+        assertEquals("mcast-feed", cfg.getForwards().get(0).getFrom());
+        assertEquals("tcp-sink",   cfg.getForwards().get(0).getTo());
+    }
+
+    // -----------------------------------------------------------------------
+    // Happy-path: valid-udp-multicast-defaults.xml — only required attributes
+    // -----------------------------------------------------------------------
+
+    @Test
+    void parsesUdpMulticastWithDefaults() throws Exception {
+        GatewayConfig cfg = ConfigParser.parse(fixture("valid-udp-multicast-defaults.xml"));
+
+        assertEquals(1, cfg.getUdpMulticasts().size());
+        UdpMulticastConfig um = cfg.getUdpMulticasts().get(0);
+        assertEquals("mcast-defaults", um.getLabel());
+        assertEquals("239.255.0.1",     um.getGroup());
+        assertEquals(5000,               um.getPort());
+        assertEquals("0.0.0.0", um.getBindAddress(), "bind-address should default to 0.0.0.0");
+        assertNull(um.getNetworkInterface(), "network-interface should be null when omitted");
     }
 
     // -----------------------------------------------------------------------

@@ -34,6 +34,7 @@
             <xs:element name="websocket-server" type="tns:WebSocketServerType"/>
             <xs:element name="tcp-client"       type="tns:TcpClientType"/>
             <xs:element name="tcp-server"       type="tns:TcpServerType"/>
+            <xs:element name="udp-multicast"    type="tns:UdpMulticastType"/>
             <xs:element name="forward"          type="tns:ForwardType"/>
         </xs:choice>
     </xs:complexType>
@@ -109,6 +110,34 @@
         <xs:attribute name="label"        type="xs:string"    use="required"/>
         <xs:attribute name="bind-address" type="xs:string"    default="0.0.0.0"/>
         <xs:attribute name="port"         type="tns:PortType" use="required"/>
+    </xs:complexType>
+
+    <!-- ================================================================== -->
+    <!-- UDP multicast endpoint                                              -->
+    <!-- ================================================================== -->
+    <xs:complexType name="UdpMulticastType">
+        <xs:annotation>
+            <xs:documentation>
+                Configures a UDP multicast endpoint.  The endpoint joins the
+                specified multicast group to receive datagrams and sends
+                outbound datagrams to the same group address.
+
+                label             - Unique name used in forward rules (required).
+                group             - Multicast group IP address, e.g. 230.0.0.1
+                                    (required).
+                port              - UDP port (required).
+                bind-address      - Local address to bind the socket to.
+                                    Defaults to 0.0.0.0 (all interfaces).
+                network-interface - Name of the network interface (NIC) to use
+                                    for joining the group and sending datagrams.
+                                    If omitted the system default is used.
+            </xs:documentation>
+        </xs:annotation>
+        <xs:attribute name="label"             type="xs:string"    use="required"/>
+        <xs:attribute name="group"             type="xs:string"    use="required"/>
+        <xs:attribute name="port"              type="tns:PortType" use="required"/>
+        <xs:attribute name="bind-address"      type="xs:string"    default="0.0.0.0"/>
+        <xs:attribute name="network-interface" type="xs:string"/>
     </xs:complexType>
 
     <!-- ================================================================== -->
