@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- UDP multicast with only required attributes; bind-address and network-interface omitted. -->
+<gateway-config xmlns="http://github.com/web-socket-gateway/config/v1">
+    <udp-multicast label="mcast-defaults"
+                   group="239.255.0.1"
+                   port="5000"/>
+</gateway-config>
