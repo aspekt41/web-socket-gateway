@@ -2,6 +2,7 @@ package net.aspekt.gateway;
 
 import jakarta.xml.bind.annotation.*;
 import net.aspekt.gateway.tcp.client.TcpClientConfig;
+import net.aspekt.gateway.tcp.hub.TcpHubConfig;
 import net.aspekt.gateway.tcp.server.TcpServerConfig;
 import net.aspekt.gateway.udp.multicast.UdpMulticastConfig;
 import net.aspekt.gateway.websocket.WebSocketServerConfig;
@@ -34,6 +35,9 @@ public class GatewayConfig {
                     namespace = NAMESPACE),
         @XmlElement(name = "tcp-server",
                     type = TcpServerConfig.class,
+                    namespace = NAMESPACE),
+        @XmlElement(name = "tcp-hub",
+                    type = TcpHubConfig.class,
                     namespace = NAMESPACE),
         @XmlElement(name = "udp-multicast",
                     type = UdpMulticastConfig.class,
@@ -68,6 +72,14 @@ public class GatewayConfig {
                 .collect(Collectors.toList());
     }
 
+    /** Returns all {@code <tcp-hub>} entries in document order. */
+    public List<TcpHubConfig> getTcpHubs() {
+        return elements.stream()
+                .filter(e -> e instanceof TcpHubConfig)
+                .map(e -> (TcpHubConfig) e)
+                .collect(Collectors.toList());
+    }
+
     /** Returns all {@code <udp-multicast>} entries in document order. */
     public List<UdpMulticastConfig> getUdpMulticasts() {
         return elements.stream()
@@ -89,6 +101,7 @@ public class GatewayConfig {
         return "GatewayConfig{webSocketServers=" + getWebSocketServers()
                 + ", tcpClients=" + getTcpClients()
                 + ", tcpServers=" + getTcpServers()
+                + ", tcpHubs=" + getTcpHubs()
                 + ", udpMulticasts=" + getUdpMulticasts()
                 + ", forwards=" + getForwards() + "}";
     }
