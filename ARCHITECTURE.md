@@ -4,8 +4,9 @@
 
 This application is a flexible, configuration-driven network gateway that routes
 raw binary data between heterogeneous transport endpoints — WebSocket servers, raw
-TCP servers, and outbound TCP clients.  Any endpoint can forward data to any other
-endpoint; fan-out to multiple targets is supported.
+TCP servers, outbound TCP clients, TCP hub servers, and UDP multicast endpoints.
+Any endpoint can forward data to any other endpoint; fan-out to multiple targets is
+supported.
 
 A common use-case is bridging browser-based JavaScript clients (which cannot open
 raw TCP sockets) to legacy TCP services, but the gateway is not limited to that
@@ -18,14 +19,16 @@ command-line argument.  The file is validated at startup against a bundled XSD
 schema (`src/main/resources/gateway-config.xsd`) using JAXB, so malformed config
 is rejected before any network work begins.
 
-The schema (namespace `http://github.com/web-socket-gateway/config/v1`, version 2.0)
-defines three kinds of **labeled endpoints** and a **forwarding rule**:
+The schema (namespace `http://github.com/web-socket-gateway/config/v1`) defines
+five kinds of **labeled endpoints** and a **forwarding rule**:
 
 | Element | Description |
 |---|---|
 | `<websocket-server>` | Binds a Netty WebSocket server; browser/JS clients connect here |
 | `<tcp-server>` | Binds a raw TCP server; plain TCP clients connect here |
-| `<tcp-client>` | Opens an outbound TCP connection to a remote host |
+| `<tcp-client>` | Opens an outbound TCP connection to a remote host with auto-reconnect |
+| `<tcp-hub>` | Binds a TCP server where inbound data is broadcast to all other connected peers |
+| `<udp-multicast>` | Joins a UDP multicast group; receives datagrams and can send to the group |
 | `<forward from="A" to="B"/>` | Routes all data arriving at endpoint `A` to endpoint `B` |
 
 Multiple `<forward>` rules with the same `from` achieve fan-out.  There is no
@@ -67,33 +70,65 @@ See `example-config.xml` for a working example.
 | `reconnect-delay-seconds` | `5` | Delay before reconnect after a lost connection |
 | `connect-timeout-seconds` | `10` | Timeout for the initial TCP handshake |
 
+### TCP hub attributes
+
+| Attribute | Default | Description |
+|---|---|---|
+| `label` | *(required)* | Unique name used in `<forward>` rules |
+| `port` | *(required)* | TCP port to listen on |
+| `bind-address` | `0.0.0.0` | IP address to bind to |
+
+The TCP hub is similar to a TCP server but with a key difference: inbound data
+from any connected client is broadcast to **all other** connected clients (peer
+broadcast), as well as forwarded to any configured `<forward>` targets.  The
+sender is excluded from the peer broadcast to prevent echo-back.
+
+### UDP multicast attributes
+
+| Attribute | Default | Description |
+|---|---|---|
+| `label` | *(required)* | Unique name used in `<forward>` rules |
+| `group` | *(required)* | Multicast group IP address (e.g. `239.0.0.1`) |
+| `port` | *(required)* | UDP port for the multicast group |
+| `bind-address` | `0.0.0.0` | Local IP address to bind to |
+| `network-interface` | *(none)* | Network interface name to use on multi-homed hosts |
+
 ## Package Structure
 
 ```
-com.gateway
-├── Main.java                      Entry point; reads config, wires endpoints, starts all components
-├── config/
-│   ├── GatewayConfig              JAXB root element (<gateway-config>)
-│   ├── WebSocketServerConfig      JAXB model for <websocket-server>
-│   ├── TcpServerConfig            JAXB model for <tcp-server>
-│   ├── TcpClientConfig            JAXB model for <tcp-client>
-│   ├── ForwardConfig              JAXB model for <forward from="…" to="…"/>
-│   ├── ConfigParser               Loads and validates the XML config file
-│   └── ConfigException            Checked exception for config errors
-├── connection/
-│   ├── ConnectionEndpoint         Interface: send, addTarget, onDataReceived
-│   ├── AbstractConnectionEndpoint Base class: label, thread-safe target list, fan-out logic
-│   ├── WebSocketEndpoint          Broadcasts to all connected WebSocket clients (ChannelGroup)
-│   ├── TcpServerEndpoint          Broadcasts raw bytes to all connected TCP server clients
-│   └── TcpClientEndpoint          Writes to the single outbound TCP channel
-├── server/
-│   ├── WebSocketServer            Netty server; binds and accepts WebSocket connections
-│   ├── WebSocketServerHandler     Netty handler; processes inbound WebSocket frames
-│   ├── TcpServer                  Netty server; binds and accepts raw TCP connections
-│   └── TcpServerHandler           Netty handler; processes inbound bytes from TCP clients
-└── client/
-    ├── TcpClient                  Netty client; connects to remote TCP host with auto-reconnect
-    └── TcpClientHandler           Netty handler; processes inbound bytes from the TCP server
+net.aspekt.gateway
+├── Main.java                        Entry point; reads config, wires endpoints, starts all components
+├── GatewayConfig                    JAXB root element (<gateway-config>)
+├── ConfigParser                     Loads and validates the XML config file
+├── ConfigException                  Checked exception for config errors
+├── ForwardConfig                    JAXB model for <forward from="…" to="…"/>
+├── ConnectionEndpoint               Interface: send, addTarget, onDataReceived
+├── AbstractConnectionEndpoint       Base class: label, thread-safe target list, fan-out logic
+├── websocket/
+│   ├── WebSocketServerConfig        JAXB model for <websocket-server>
+│   ├── WebSocketServer              Netty server; binds and accepts WebSocket connections
+│   ├── WebSocketEndpoint            Broadcasts to all connected WebSocket clients (ChannelGroup)
+│   └── WebSocketServerHandler       Netty handler; processes inbound WebSocket frames
+├── tcp/server/
+│   ├── TcpServerConfig              JAXB model for <tcp-server>
+│   ├── TcpServer                    Netty server; binds and accepts raw TCP connections
+│   ├── TcpServerEndpoint            Broadcasts raw bytes to all connected TCP server clients
+│   └── TcpServerHandler             Netty handler; processes inbound bytes from TCP clients
+├── tcp/client/
+│   ├── TcpClientConfig              JAXB model for <tcp-client>
+│   ├── TcpClient                    Netty client; connects to remote TCP host with auto-reconnect
+│   ├── TcpClientEndpoint            Writes to the single outbound TCP channel
+│   └── TcpClientHandler             Netty handler; processes inbound bytes from the TCP server
+├── tcp/hub/
+│   ├── TcpHubConfig                 JAXB model for <tcp-hub>
+│   ├── TcpHub                       Netty server; binds and accepts hub TCP connections
+│   ├── TcpHubEndpoint               Broadcasts to all peers (excluding sender) + forwards to targets
+│   └── TcpHubHandler                Netty handler; processes inbound bytes from hub clients
+└── udp/multicast/
+    ├── UdpMulticastConfig           JAXB model for <udp-multicast>
+    ├── UdpMulticast                 Netty UDP channel; joins multicast group, manages lifecycle
+    ├── UdpMulticastEndpoint         Sends DatagramPackets to the multicast group address
+    └── UdpMulticastHandler          Netty handler; processes inbound datagrams
 ```
 
 ## Data Flow
@@ -115,6 +150,10 @@ specific transport:
   clients via a `DefaultChannelGroup` (no framing added).
 - **`TcpClientEndpoint.send`** — writes the raw buffer to the single outbound TCP
   channel, or discards it if the channel is absent or inactive.
+- **`TcpHubEndpoint.send`** — broadcasts the raw buffer to all connected hub peers
+  (excluding the originating channel) and forwards to configured targets.
+- **`UdpMulticastEndpoint.send`** — wraps the buffer in a `DatagramPacket` and
+  writes it to the multicast group address on the UDP channel.
 
 Buffer ownership follows a clear contract: `onDataReceived` takes ownership of the
 caller's reference; each `send` implementation takes ownership of the reference
@@ -158,6 +197,29 @@ NioSocketChannel
 Frame decoders (e.g. line-based, length-prefixed) can be inserted into either TCP
 pipeline when the wire format requires it.
 
+### TCP hub pipeline
+
+```
+NioServerSocketChannel
+  └── NioSocketChannel (per accepted connection)
+        └── TcpHubHandler    Registers channel; broadcasts inbound bytes to peers + targets
+```
+
+The hub handler uses a `ChannelMatcher` to exclude the originating channel from
+peer broadcasts, preventing echo-back without requiring an O(n) scan.
+
+### UDP multicast pipeline
+
+```
+NioDatagramChannel (single shared channel, not per-client)
+  └── UdpMulticastHandler    Extracts datagram payload; forwards to configured targets
+```
+
+The channel joins the configured multicast group at startup (optionally binding to
+a specific network interface) and leaves the group on shutdown.  Outbound data
+sent to a `UdpMulticastEndpoint` is wrapped in a `DatagramPacket` addressed to the
+group and delivered via the same shared channel.
+
 ## Reconnection
 
 `TcpClient` automatically reconnects after a lost connection.  When
@@ -169,9 +231,15 @@ arriving during the gap is dropped cleanly rather than sent to an inactive chann
 
 ## Shutdown
 
-A JVM shutdown hook (registered in `Main`) calls `stop()` on every `TcpClient`,
-`WebSocketServer`, and `TcpServer` in order, giving Netty a chance to close
-channels and release its event loop threads gracefully before the process exits.
+A JVM shutdown hook (registered in `Main`) calls `stop()` on every component in
+order, giving Netty a chance to close channels and release event loop threads
+gracefully before the process exits:
+
+1. All `TcpClient` instances — stops reconnect scheduling and closes channels
+2. All `UdpMulticast` instances — leaves multicast group, closes datagram channel
+3. All `WebSocketServer` instances — closes WebSocket channels and server socket
+4. All `TcpServer` instances — closes TCP client channels and server socket
+5. All `TcpHub` instances — closes hub client channels and server socket
 
 ## Logging
 
