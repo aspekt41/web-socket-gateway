@@ -21,7 +21,7 @@ jacoco {
 }
 
 application {
-    mainClass = "com.gateway.Main"
+    mainClass = "net.aspekt.gateway.Main"
 }
 
 repositories {
@@ -56,7 +56,7 @@ tasks.shadowJar {
     archiveClassifier = ""
     archiveVersion = ""
     manifest {
-        attributes["Main-Class"] = "com.gateway.Main"
+        attributes["Main-Class"] = "net.aspekt.gateway.Main"
     }
     mergeServiceFiles()
 }
