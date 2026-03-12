@@ -5,7 +5,7 @@ plugins {
     id("com.gradleup.shadow") version "9.3.2"
 }
 
-group = "com.gateway"
+group = "net.aspekt.gateway"
 version = "1.0.0-SNAPSHOT"
 
 java {
@@ -27,10 +27,10 @@ repositories {
 }
 
 dependencies {
-    implementation("io.netty:netty-all:4.1.107.Final")
-    implementation("jakarta.xml.bind:jakarta.xml.bind-api:4.0.4")
-    runtimeOnly("com.sun.xml.bind:jaxb-impl:4.0.4")
-    testImplementation("org.junit.jupiter:junit-jupiter:5.10.2")
+    implementation("io.netty:netty-all:4.+")
+    implementation("jakarta.xml.bind:jakarta.xml.bind-api:4.+")
+    runtimeOnly("com.sun.xml.bind:jaxb-impl:4.+")
+    testImplementation("org.junit.jupiter:junit-jupiter:5.+")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 }
 
