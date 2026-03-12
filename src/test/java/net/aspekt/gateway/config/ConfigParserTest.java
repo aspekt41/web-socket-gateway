@@ -5,6 +5,7 @@ import net.aspekt.gateway.ConfigParser;
 import net.aspekt.gateway.ForwardConfig;
 import net.aspekt.gateway.GatewayConfig;
 import net.aspekt.gateway.tcp.client.TcpClientConfig;
+import net.aspekt.gateway.tcp.hub.TcpHubConfig;
 import net.aspekt.gateway.tcp.server.TcpServerConfig;
 import net.aspekt.gateway.udp.multicast.UdpMulticastConfig;
 import net.aspekt.gateway.websocket.WebSocketServerConfig;
@@ -221,6 +222,28 @@ class ConfigParserTest {
         assertEquals(5000,               um.getPort());
         assertEquals("0.0.0.0", um.getBindAddress(), "bind-address should default to 0.0.0.0");
         assertNull(um.getNetworkInterface(), "network-interface should be null when omitted");
+    }
+
+    // -----------------------------------------------------------------------
+    // Happy-path: valid-tcp-hub.xml — tcp-hub declaration
+    // -----------------------------------------------------------------------
+
+    @Test
+    void parsesTcpHubConfig() throws Exception {
+        GatewayConfig cfg = ConfigParser.parse(fixture("valid-tcp-hub.xml"));
+
+        assertEquals(0, cfg.getWebSocketServers().size());
+        assertEquals(0, cfg.getTcpServers().size());
+        assertEquals(1, cfg.getTcpHubs().size());
+        TcpHubConfig hub = cfg.getTcpHubs().get(0);
+        assertEquals("chat-hub",    hub.getLabel());
+        assertEquals("127.0.0.1",  hub.getBindAddress());
+        assertEquals(7100,          hub.getPort());
+
+        assertEquals(1, cfg.getTcpClients().size());
+        assertEquals(2, cfg.getForwards().size());
+        assertEquals("chat-hub",    cfg.getForwards().get(0).getFrom());
+        assertEquals("hub-backend", cfg.getForwards().get(0).getTo());
     }
 
     // -----------------------------------------------------------------------

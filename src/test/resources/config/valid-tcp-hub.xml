@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<gateway-config xmlns="http://github.com/web-socket-gateway/config/v1">
+    <tcp-hub label="chat-hub"
+             bind-address="127.0.0.1"
+             port="7100"/>
+    <tcp-client label="hub-backend"
+                host="192.168.1.50"
+                port="6000"/>
+    <forward from="chat-hub"    to="hub-backend"/>
+    <forward from="hub-backend" to="chat-hub"/>
+</gateway-config>

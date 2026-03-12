@@ -3,6 +3,9 @@ package net.aspekt.gateway;
 import net.aspekt.gateway.tcp.client.TcpClient;
 import net.aspekt.gateway.tcp.client.TcpClientConfig;
 import net.aspekt.gateway.tcp.client.TcpClientEndpoint;
+import net.aspekt.gateway.tcp.hub.TcpHub;
+import net.aspekt.gateway.tcp.hub.TcpHubConfig;
+import net.aspekt.gateway.tcp.hub.TcpHubEndpoint;
 import net.aspekt.gateway.tcp.server.TcpServer;
 import net.aspekt.gateway.tcp.server.TcpServerConfig;
 import net.aspekt.gateway.tcp.server.TcpServerEndpoint;
@@ -72,6 +75,7 @@ public class Main {
         Map<String, ConnectionEndpoint> registry = new LinkedHashMap<>();
         List<WebSocketServer> wsServers     = new ArrayList<>();
         List<TcpServer>       tcpServers    = new ArrayList<>();
+        List<TcpHub>          tcpHubs       = new ArrayList<>();
         List<TcpClient>       tcpClients    = new ArrayList<>();
         List<UdpMulticast>    udpMulticasts = new ArrayList<>();
 
@@ -93,6 +97,16 @@ public class Main {
             TcpServerEndpoint ep = new TcpServerEndpoint(tcpSrvCfg.getLabel());
             registry.put(tcpSrvCfg.getLabel(), ep);
             tcpServers.add(new TcpServer(tcpSrvCfg, ep));
+        }
+
+        for (TcpHubConfig tcpHubCfg : config.getTcpHubs()) {
+            if (registry.containsKey(tcpHubCfg.getLabel())) {
+                log.severe("Duplicate label: " + tcpHubCfg.getLabel());
+                System.exit(1);
+            }
+            TcpHubEndpoint ep = new TcpHubEndpoint(tcpHubCfg.getLabel());
+            registry.put(tcpHubCfg.getLabel(), ep);
+            tcpHubs.add(new TcpHub(tcpHubCfg, ep));
         }
 
         for (TcpClientConfig tcpCfg : config.getTcpClients()) {
@@ -138,8 +152,8 @@ public class Main {
         // ----------------------------------------------------------------
         // 3. Start all components
         // ----------------------------------------------------------------
-        if (wsServers.isEmpty() && tcpServers.isEmpty() && udpMulticasts.isEmpty()) {
-            log.warning("No server entries (websocket-server, tcp-server, or udp-multicast) found in config — exiting.");
+        if (wsServers.isEmpty() && tcpServers.isEmpty() && tcpHubs.isEmpty() && udpMulticasts.isEmpty()) {
+            log.warning("No server entries (websocket-server, tcp-server, tcp-hub, or udp-multicast) found in config — exiting.");
             System.exit(0);
         }
 
@@ -148,6 +162,9 @@ public class Main {
         }
         for (TcpServer ts : tcpServers) {
             ts.start();
+        }
+        for (TcpHub th : tcpHubs) {
+            th.start();
         }
         for (TcpClient tc : tcpClients) {
             tc.start();
@@ -163,6 +180,7 @@ public class Main {
             udpMulticasts.forEach(UdpMulticast::stop);
             wsServers.forEach(WebSocketServer::stop);
             tcpServers.forEach(TcpServer::stop);
+            tcpHubs.forEach(TcpHub::stop);
         }, "shutdown-hook"));
 
         // Block the main thread until the first server channel closes.
@@ -170,6 +188,8 @@ public class Main {
             wsServers.get(0).awaitShutdown();
         } else if (!tcpServers.isEmpty()) {
             tcpServers.get(0).awaitShutdown();
+        } else if (!tcpHubs.isEmpty()) {
+            tcpHubs.get(0).awaitShutdown();
         } else {
             udpMulticasts.get(0).awaitShutdown();
         }
