@@ -81,14 +81,10 @@ public class TcpHubEndpoint extends AbstractConnectionEndpoint {
      * @param buf    inbound data; ownership is transferred to this method
      */
     public void onHubDataReceived(Channel sender, ByteBuf buf) {
-        // Check if there are any peer channels (any channel other than sender)
-        boolean hasPeers = false;
-        for (Channel ch : channels) {
-            if (ch != sender) {
-                hasPeers = true;
-                break;
-            }
-        }
+        // Check if there are any peer channels (any channel other than sender).
+        // DefaultChannelGroup auto-removes closed channels, and the sender is
+        // always present in the group, so size() > 1 means at least one peer exists.
+        boolean hasPeers = channels.size() > 1;
 
         java.util.List<ConnectionEndpoint> targets = getTargets();
 
