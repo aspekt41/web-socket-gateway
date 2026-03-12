@@ -1,10 +1,9 @@
 package net.aspekt.gateway;
 
 import io.netty.buffer.ByteBuf;
+import java.util.List;
 import net.aspekt.gateway.tcp.client.TcpClientEndpoint;
 import net.aspekt.gateway.websocket.WebSocketEndpoint;
-
-import java.util.List;
 
 /**
  * A named data endpoint that can send and receive raw bytes.

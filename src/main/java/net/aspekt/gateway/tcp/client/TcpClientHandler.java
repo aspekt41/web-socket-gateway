@@ -3,7 +3,6 @@ package net.aspekt.gateway.tcp.client;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
-
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -22,7 +21,7 @@ public class TcpClientHandler extends ChannelInboundHandlerAdapter {
     private final TcpClientEndpoint endpoint;
 
     public TcpClientHandler(TcpClient owner, TcpClientEndpoint endpoint) {
-        this.owner    = owner;
+        this.owner = owner;
         this.endpoint = endpoint;
     }
 
@@ -54,8 +53,11 @@ public class TcpClientHandler extends ChannelInboundHandlerAdapter {
 
     @Override
     public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) {
-        log.log(Level.SEVERE, "[" + endpoint.getLabel() + "] Exception on TCP channel "
-                + ctx.channel().remoteAddress(), cause);
+        log.log(
+                Level.SEVERE,
+                "[" + endpoint.getLabel() + "] Exception on TCP channel "
+                        + ctx.channel().remoteAddress(),
+                cause);
         ctx.close();
     }
 }

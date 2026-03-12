@@ -27,11 +27,25 @@ public class WebSocketServerConfig {
     @XmlAttribute(name = "max-frame-bytes")
     private int maxFrameBytes = 65536;
 
-    public String getLabel() { return label; }
-    public String getBindAddress() { return bindAddress; }
-    public int getPort() { return port; }
-    public String getPath() { return path; }
-    public int getMaxFrameBytes() { return maxFrameBytes; }
+    public String getLabel() {
+        return label;
+    }
+
+    public String getBindAddress() {
+        return bindAddress;
+    }
+
+    public int getPort() {
+        return port;
+    }
+
+    public String getPath() {
+        return path;
+    }
+
+    public int getMaxFrameBytes() {
+        return maxFrameBytes;
+    }
 
     @Override
     public String toString() {

@@ -7,7 +7,6 @@ import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
 import io.netty.handler.logging.LogLevel;
 import io.netty.handler.logging.LoggingHandler;
-
 import java.net.InetSocketAddress;
 import java.util.logging.Logger;
 
@@ -34,7 +33,7 @@ public class TcpServer implements AutoCloseable {
     private Channel serverChannel;
 
     public TcpServer(TcpServerConfig config, TcpServerEndpoint endpoint) {
-        this.config   = config;
+        this.config = config;
         this.endpoint = endpoint;
     }
 
@@ -46,7 +45,7 @@ public class TcpServer implements AutoCloseable {
      *                              waiting for the bind to complete
      */
     public void start() throws InterruptedException {
-        bossGroup   = new NioEventLoopGroup(1);
+        bossGroup = new NioEventLoopGroup(1);
         workerGroup = new NioEventLoopGroup();
 
         ServerBootstrap bootstrap = new ServerBootstrap()
@@ -61,13 +60,12 @@ public class TcpServer implements AutoCloseable {
                     }
                 });
 
-        InetSocketAddress address =
-                new InetSocketAddress(config.getBindAddress(), config.getPort());
+        InetSocketAddress address = new InetSocketAddress(config.getBindAddress(), config.getPort());
         ChannelFuture bindFuture = bootstrap.bind(address).sync();
         serverChannel = bindFuture.channel();
 
-        log.info("[" + endpoint.getLabel() + "] TCP server listening on tcp://"
-                + config.getBindAddress() + ":" + config.getPort());
+        log.info("[" + endpoint.getLabel() + "] TCP server listening on tcp://" + config.getBindAddress() + ":"
+                + config.getPort());
     }
 
     /**

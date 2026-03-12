@@ -1,13 +1,7 @@
 package net.aspekt.gateway;
 
-import net.aspekt.gateway.tcp.client.TcpClient;
-import net.aspekt.gateway.tcp.client.TcpClientConfig;
-import net.aspekt.gateway.tcp.client.TcpClientEndpoint;
-import net.aspekt.gateway.websocket.WebSocketEndpoint;
-import net.aspekt.gateway.websocket.WebSocketServer;
-import net.aspekt.gateway.websocket.WebSocketServerConfig;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.Timeout;
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.EOFException;
 import java.io.File;
@@ -23,9 +17,14 @@ import java.nio.file.Files;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
-
-import static org.junit.jupiter.api.Assertions.assertArrayEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import net.aspekt.gateway.tcp.client.TcpClient;
+import net.aspekt.gateway.tcp.client.TcpClientConfig;
+import net.aspekt.gateway.tcp.client.TcpClientEndpoint;
+import net.aspekt.gateway.websocket.WebSocketEndpoint;
+import net.aspekt.gateway.websocket.WebSocketServer;
+import net.aspekt.gateway.websocket.WebSocketServerConfig;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.Timeout;
 
 /**
  * End-to-end integration test for the TCP↔WebSocket bridge.
@@ -66,7 +65,7 @@ class BridgeIntegrationTest {
         //     TcpClient can connect to it.
         // ----------------------------------------------------------------
         int tcpPort = findFreePort();
-        int wsPort  = findFreePort();
+        int wsPort = findFreePort();
 
         ServerSocket tcpServer = new ServerSocket(tcpPort);
         tcpServer.setSoTimeout(10_000);
@@ -81,17 +80,17 @@ class BridgeIntegrationTest {
             File configFile = writeTempConfig(wsPort, tcpPort);
             GatewayConfig config = ConfigParser.parse(configFile);
 
-            WebSocketServerConfig wsCfg  = config.getWebSocketServers().get(0);
-            TcpClientConfig       tcpCfg = config.getTcpClients().get(0);
+            WebSocketServerConfig wsCfg = config.getWebSocketServers().get(0);
+            TcpClientConfig tcpCfg = config.getTcpClients().get(0);
 
-            WebSocketEndpoint wsEndpoint  = new WebSocketEndpoint(wsCfg.getLabel());
+            WebSocketEndpoint wsEndpoint = new WebSocketEndpoint(wsCfg.getLabel());
             TcpClientEndpoint tcpEndpoint = new TcpClientEndpoint(tcpCfg.getLabel());
 
             // Bidirectional forwarding
             wsEndpoint.addTarget(tcpEndpoint);
             tcpEndpoint.addTarget(wsEndpoint);
 
-            wsServer  = new WebSocketServer(wsCfg, wsEndpoint);
+            wsServer = new WebSocketServer(wsCfg, wsEndpoint);
             wsServer.start();
 
             tcpClient = new TcpClient(tcpCfg, tcpEndpoint);
@@ -107,18 +106,15 @@ class BridgeIntegrationTest {
             // ------------------------------------------------------------
             // 4.  Connect a WebSocket client to the gateway.
             // ------------------------------------------------------------
-            CountDownLatch connected     = new CountDownLatch(1);
+            CountDownLatch connected = new CountDownLatch(1);
             CompletableFuture<byte[]> tcpToWsData = new CompletableFuture<>();
 
             HttpClient http = HttpClient.newHttpClient();
             WebSocket wsClient = http.newWebSocketBuilder()
-                    .buildAsync(
-                            URI.create("ws://127.0.0.1:" + wsPort + "/ws"),
-                            new WsListener(connected, tcpToWsData))
+                    .buildAsync(URI.create("ws://127.0.0.1:" + wsPort + "/ws"), new WsListener(connected, tcpToWsData))
                     .get(10, TimeUnit.SECONDS);
 
-            assertTrue(connected.await(10, TimeUnit.SECONDS),
-                    "WebSocket handshake did not complete within 10 s");
+            assertTrue(connected.await(10, TimeUnit.SECONDS), "WebSocket handshake did not complete within 10 s");
 
             // Brief pause so that the WS channel is fully registered in the
             // endpoint before we start sending TCP data.
@@ -131,8 +127,7 @@ class BridgeIntegrationTest {
             wsClient.sendBinary(ByteBuffer.wrap(WS_TO_TCP), true).get(5, TimeUnit.SECONDS);
 
             byte[] receivedAtTcp = readExact(tcpConn, WS_TO_TCP.length);
-            assertArrayEquals(WS_TO_TCP, receivedAtTcp,
-                    "Bytes forwarded WS→TCP should be identical to what was sent");
+            assertArrayEquals(WS_TO_TCP, receivedAtTcp, "Bytes forwarded WS→TCP should be identical to what was sent");
 
             // ------------------------------------------------------------
             // 6.  TCP → WS: send bytes from the test TCP server and
@@ -142,20 +137,18 @@ class BridgeIntegrationTest {
             tcpConn.getOutputStream().flush();
 
             byte[] receivedAtWs = tcpToWsData.get(10, TimeUnit.SECONDS);
-            assertArrayEquals(TCP_TO_WS, receivedAtWs,
-                    "Bytes forwarded TCP→WS should be identical to what was sent");
+            assertArrayEquals(TCP_TO_WS, receivedAtWs, "Bytes forwarded TCP→WS should be identical to what was sent");
 
             // ------------------------------------------------------------
             // 7.  Clean up the WebSocket client gracefully.
             // ------------------------------------------------------------
-            wsClient.sendClose(WebSocket.NORMAL_CLOSURE, "test done")
-                    .get(5, TimeUnit.SECONDS);
+            wsClient.sendClose(WebSocket.NORMAL_CLOSURE, "test done").get(5, TimeUnit.SECONDS);
             tcpConn.close();
 
         } finally {
             tcpServer.close();
             if (tcpClient != null) tcpClient.stop();
-            if (wsServer  != null) wsServer.stop();
+            if (wsServer != null) wsServer.stop();
         }
     }
 
@@ -177,29 +170,29 @@ class BridgeIntegrationTest {
         private final CompletableFuture<byte[]> firstBinary;
 
         // Accumulates chunks for the current message
-        private final java.io.ByteArrayOutputStream messageBuffer =
-                new java.io.ByteArrayOutputStream();
+        private final java.io.ByteArrayOutputStream messageBuffer = new java.io.ByteArrayOutputStream();
 
         WsListener(CountDownLatch connected, CompletableFuture<byte[]> firstBinary) {
-            this.connected   = connected;
+            this.connected = connected;
             this.firstBinary = firstBinary;
         }
 
         @Override
         public void onOpen(WebSocket ws) {
             connected.countDown();
-            ws.request(Long.MAX_VALUE);   // allow all messages without per-message flow control
+            ws.request(Long.MAX_VALUE); // allow all messages without per-message flow control
         }
 
         @Override
-        public java.util.concurrent.CompletionStage<?> onBinary(
-                WebSocket ws, ByteBuffer data, boolean last) {
+        public java.util.concurrent.CompletionStage<?> onBinary(WebSocket ws, ByteBuffer data, boolean last) {
 
             byte[] chunk = new byte[data.remaining()];
             data.get(chunk);
             try {
                 messageBuffer.write(chunk);
-            } catch (IOException ignored) { /* ByteArrayOutputStream never throws */ }
+            } catch (IOException ignored) {
+                /* ByteArrayOutputStream never throws */
+            }
 
             if (last && !firstBinary.isDone()) {
                 firstBinary.complete(messageBuffer.toByteArray());
@@ -209,8 +202,7 @@ class BridgeIntegrationTest {
         }
 
         @Override
-        public java.util.concurrent.CompletionStage<?> onClose(
-                WebSocket ws, int statusCode, String reason) {
+        public java.util.concurrent.CompletionStage<?> onClose(WebSocket ws, int statusCode, String reason) {
             return null;
         }
 
@@ -264,8 +256,7 @@ class BridgeIntegrationTest {
         int offset = 0;
         while (offset < length) {
             int n = in.read(buf, offset, length - offset);
-            if (n < 0) throw new EOFException(
-                    "Socket closed after " + offset + " of " + length + " bytes");
+            if (n < 0) throw new EOFException("Socket closed after " + offset + " of " + length + " bytes");
             offset += n;
         }
         return buf;

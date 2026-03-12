@@ -27,8 +27,7 @@ import net.aspekt.gateway.ConnectionEndpoint;
  */
 public class TcpHubEndpoint extends AbstractConnectionEndpoint {
 
-    private final ChannelGroup channels =
-            new DefaultChannelGroup(GlobalEventExecutor.INSTANCE);
+    private final ChannelGroup channels = new DefaultChannelGroup(GlobalEventExecutor.INSTANCE);
 
     public TcpHubEndpoint(String label) {
         super(label);

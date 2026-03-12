@@ -1,5 +1,13 @@
 package net.aspekt.gateway;
 
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
+
+import java.io.EOFException;
+import java.io.IOException;
+import java.io.InputStream;
+import java.lang.reflect.Field;
+import java.net.ServerSocket;
+import java.net.Socket;
 import net.aspekt.gateway.tcp.client.TcpClient;
 import net.aspekt.gateway.tcp.client.TcpClientConfig;
 import net.aspekt.gateway.tcp.client.TcpClientEndpoint;
@@ -8,15 +16,6 @@ import net.aspekt.gateway.tcp.server.TcpServerConfig;
 import net.aspekt.gateway.tcp.server.TcpServerEndpoint;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.Timeout;
-
-import java.io.EOFException;
-import java.io.IOException;
-import java.io.InputStream;
-import java.lang.reflect.Field;
-import java.net.ServerSocket;
-import java.net.Socket;
-
-import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 
 /**
  * End-to-end integration test for a raw TCP client → TCP server bridge.
@@ -29,13 +28,13 @@ import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 class TcpServerIntegrationTest {
 
     private static final byte[] CLIENT_TO_BACKEND = {0x01, 0x02, 0x03, 0x04};
-    private static final byte[] BACKEND_TO_CLIENT  = {(byte) 0xAA, (byte) 0xBB};
+    private static final byte[] BACKEND_TO_CLIENT = {(byte) 0xAA, (byte) 0xBB};
 
     @Test
     @Timeout(30)
     void rawDataFlowsThroughTcpServerToTcpClientBridge() throws Exception {
-        int tcpServerPort = findFreePort();  // gateway listens here
-        int backendPort   = findFreePort();  // "backend" ServerSocket
+        int tcpServerPort = findFreePort(); // gateway listens here
+        int backendPort = findFreePort(); // "backend" ServerSocket
 
         ServerSocket backendServer = new ServerSocket(backendPort);
         backendServer.setSoTimeout(10_000);
@@ -50,8 +49,8 @@ class TcpServerIntegrationTest {
             TcpServerEndpoint srvEp = new TcpServerEndpoint(srvCfg.getLabel());
             TcpClientEndpoint cliEp = new TcpClientEndpoint(cliCfg.getLabel());
 
-            srvEp.addTarget(cliEp);  // inbound TCP → backend
-            cliEp.addTarget(srvEp);  // backend reply → inbound TCP clients
+            srvEp.addTarget(cliEp); // inbound TCP → backend
+            cliEp.addTarget(srvEp); // backend reply → inbound TCP clients
 
             tcpServer = new TcpServer(srvCfg, srvEp);
             tcpServer.start();
@@ -72,13 +71,17 @@ class TcpServerIntegrationTest {
             // client → backend
             clientConn.getOutputStream().write(CLIENT_TO_BACKEND);
             clientConn.getOutputStream().flush();
-            assertArrayEquals(CLIENT_TO_BACKEND, readExact(backendConn, CLIENT_TO_BACKEND.length),
+            assertArrayEquals(
+                    CLIENT_TO_BACKEND,
+                    readExact(backendConn, CLIENT_TO_BACKEND.length),
                     "Bytes forwarded client→backend should be identical to what was sent");
 
             // backend → client
             backendConn.getOutputStream().write(BACKEND_TO_CLIENT);
             backendConn.getOutputStream().flush();
-            assertArrayEquals(BACKEND_TO_CLIENT, readExact(clientConn, BACKEND_TO_CLIENT.length),
+            assertArrayEquals(
+                    BACKEND_TO_CLIENT,
+                    readExact(clientConn, BACKEND_TO_CLIENT.length),
                     "Bytes forwarded backend→client should be identical to what was sent");
 
             clientConn.close();
@@ -135,8 +138,7 @@ class TcpServerIntegrationTest {
         int offset = 0;
         while (offset < length) {
             int n = in.read(buf, offset, length - offset);
-            if (n < 0) throw new EOFException(
-                    "Socket closed after " + offset + " of " + length + " bytes");
+            if (n < 0) throw new EOFException("Socket closed after " + offset + " of " + length + " bytes");
             offset += n;
         }
         return buf;

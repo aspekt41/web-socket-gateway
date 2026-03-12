@@ -1,9 +1,9 @@
 package net.aspekt.gateway.config;
 
+import static org.junit.jupiter.api.Assertions.*;
+
 import net.aspekt.gateway.ConfigException;
 import org.junit.jupiter.api.Test;
-
-import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * Unit tests for {@link ConfigException} — both constructors.

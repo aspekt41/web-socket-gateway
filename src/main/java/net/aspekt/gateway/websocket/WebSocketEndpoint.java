@@ -21,8 +21,7 @@ import net.aspekt.gateway.AbstractConnectionEndpoint;
  */
 public class WebSocketEndpoint extends AbstractConnectionEndpoint {
 
-    private final ChannelGroup channels =
-            new DefaultChannelGroup(GlobalEventExecutor.INSTANCE);
+    private final ChannelGroup channels = new DefaultChannelGroup(GlobalEventExecutor.INSTANCE);
 
     public WebSocketEndpoint(String label) {
         super(label);

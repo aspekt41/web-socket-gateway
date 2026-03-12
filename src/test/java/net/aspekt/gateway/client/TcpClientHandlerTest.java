@@ -1,21 +1,20 @@
 package net.aspekt.gateway.client;
 
+import static org.junit.jupiter.api.Assertions.*;
+
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import io.netty.channel.DefaultChannelId;
 import io.netty.channel.EventLoop;
 import io.netty.channel.embedded.EmbeddedChannel;
 import io.netty.handler.codec.http.websocketx.BinaryWebSocketFrame;
+import java.lang.reflect.Field;
 import net.aspekt.gateway.tcp.client.TcpClient;
 import net.aspekt.gateway.tcp.client.TcpClientConfig;
 import net.aspekt.gateway.tcp.client.TcpClientEndpoint;
 import net.aspekt.gateway.tcp.client.TcpClientHandler;
 import net.aspekt.gateway.websocket.WebSocketEndpoint;
 import org.junit.jupiter.api.Test;
-
-import java.lang.reflect.Field;
-
-import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * Unit tests for TcpClientHandler using EmbeddedChannel for synchronous I/O.
@@ -64,13 +63,12 @@ class TcpClientHandlerTest {
     @Test
     void channelActiveSetsTcpChannelOnEndpoint() throws Exception {
         TcpClientEndpoint endpoint = new TcpClientEndpoint("test");
-        EmbeddedChannel ch = new EmbeddedChannel(
-                new TcpClientHandler(new NoOpTcpClient(endpoint), endpoint));
+        EmbeddedChannel ch = new EmbeddedChannel(new TcpClientHandler(new NoOpTcpClient(endpoint), endpoint));
 
         // EmbeddedChannel fires channelActive during construction
         // Verify the channel is tracked by sending data and checking it routes to targets
         // (The endpoint's channel is the EmbeddedChannel itself; checking via clearChannel effect)
-        assertDoesNotThrow(() -> ch.writeInbound(Unpooled.copiedBuffer(new byte[]{0x01})));
+        assertDoesNotThrow(() -> ch.writeInbound(Unpooled.copiedBuffer(new byte[] {0x01})));
         // With no targets registered, data is dropped cleanly — no exception means channel was set
 
         ch.close();
@@ -87,8 +85,7 @@ class TcpClientHandlerTest {
         EmbeddedChannel fakeTcpCh = new EmbeddedChannel();
         endpoint.setChannel(fakeTcpCh);
 
-        EmbeddedChannel handlerCh = new EmbeddedChannel(
-                new TcpClientHandler(new NoOpTcpClient(endpoint), endpoint));
+        EmbeddedChannel handlerCh = new EmbeddedChannel(new TcpClientHandler(new NoOpTcpClient(endpoint), endpoint));
 
         // channelActive of handlerCh overwrites the endpoint channel; now close it
         handlerCh.close(); // triggers channelInactive → endpoint.clearChannel()
@@ -97,7 +94,7 @@ class TcpClientHandlerTest {
         // We can verify indirectly: no exception thrown, and any target gets nothing
         WebSocketEndpoint wsEp = new WebSocketEndpoint("ws-test");
         endpoint.addTarget(wsEp);
-        endpoint.onDataReceived(Unpooled.copiedBuffer(new byte[]{0x01}));
+        endpoint.onDataReceived(Unpooled.copiedBuffer(new byte[] {0x01}));
         // wsEp has no connected WS channels so buf gets released inside send() — no leak
 
         fakeTcpCh.close();
@@ -107,8 +104,7 @@ class TcpClientHandlerTest {
     void channelInactiveSchedulesOneReconnect() throws Exception {
         TcpClientEndpoint endpoint = new TcpClientEndpoint("test");
         NoOpTcpClient stub = new NoOpTcpClient(endpoint);
-        EmbeddedChannel ch = new EmbeddedChannel(
-                new TcpClientHandler(stub, endpoint));
+        EmbeddedChannel ch = new EmbeddedChannel(new TcpClientHandler(stub, endpoint));
 
         ch.close();
 
@@ -123,7 +119,7 @@ class TcpClientHandlerTest {
     void tcpDataForwardedToAllWsClientsAsBinaryFrame() throws Exception {
         // Wire: tcpEndpoint → wsEndpoint (which holds two WS client channels)
         TcpClientEndpoint tcpEndpoint = new TcpClientEndpoint("test-tcp");
-        WebSocketEndpoint wsEndpoint  = new WebSocketEndpoint("test-ws");
+        WebSocketEndpoint wsEndpoint = new WebSocketEndpoint("test-ws");
         tcpEndpoint.addTarget(wsEndpoint);
 
         // Register two fake WebSocket client channels.
@@ -135,8 +131,7 @@ class TcpClientHandlerTest {
         wsEndpoint.addChannel(wsClient1);
         wsEndpoint.addChannel(wsClient2);
 
-        EmbeddedChannel tcpCh = new EmbeddedChannel(
-                new TcpClientHandler(new NoOpTcpClient(tcpEndpoint), tcpEndpoint));
+        EmbeddedChannel tcpCh = new EmbeddedChannel(new TcpClientHandler(new NoOpTcpClient(tcpEndpoint), tcpEndpoint));
 
         byte[] testData = {0x01, 0x02, 0x03, 0x04, 0x05};
         tcpCh.writeInbound(Unpooled.copiedBuffer(testData));
@@ -160,10 +155,9 @@ class TcpClientHandlerTest {
     @Test
     void tcpDataDroppedWhenNoTargetsRegistered() throws Exception {
         TcpClientEndpoint endpoint = new TcpClientEndpoint("test");
-        EmbeddedChannel ch = new EmbeddedChannel(
-                new TcpClientHandler(new NoOpTcpClient(endpoint), endpoint));
+        EmbeddedChannel ch = new EmbeddedChannel(new TcpClientHandler(new NoOpTcpClient(endpoint), endpoint));
 
-        ByteBuf buf = Unpooled.copiedBuffer(new byte[]{0xA, 0xB});
+        ByteBuf buf = Unpooled.copiedBuffer(new byte[] {0xA, 0xB});
         // Must not throw, and the buffer must be released by the handler
         assertDoesNotThrow(() -> ch.writeInbound(buf));
 
@@ -177,8 +171,7 @@ class TcpClientHandlerTest {
     @Test
     void exceptionCaughtClosesChannel() throws Exception {
         TcpClientEndpoint endpoint = new TcpClientEndpoint("test");
-        EmbeddedChannel ch = new EmbeddedChannel(
-                new TcpClientHandler(new NoOpTcpClient(endpoint), endpoint));
+        EmbeddedChannel ch = new EmbeddedChannel(new TcpClientHandler(new NoOpTcpClient(endpoint), endpoint));
 
         assertTrue(ch.isActive());
         ch.pipeline().fireExceptionCaught(new RuntimeException("simulated TCP error"));

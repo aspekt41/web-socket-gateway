@@ -1,11 +1,11 @@
 package net.aspekt.gateway.server;
 
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+
 import net.aspekt.gateway.tcp.server.TcpServer;
 import net.aspekt.gateway.tcp.server.TcpServerConfig;
 import net.aspekt.gateway.tcp.server.TcpServerEndpoint;
 import org.junit.jupiter.api.Test;
-
-import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 
 /**
  * Unit tests for {@link TcpServer} lifecycle methods that do not require

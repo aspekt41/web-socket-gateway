@@ -21,14 +21,20 @@ public class TcpServerConfig {
     @XmlAttribute(name = "port", required = true)
     private int port;
 
-    public String getLabel()       { return label; }
-    public String getBindAddress() { return bindAddress; }
-    public int    getPort()        { return port; }
+    public String getLabel() {
+        return label;
+    }
+
+    public String getBindAddress() {
+        return bindAddress;
+    }
+
+    public int getPort() {
+        return port;
+    }
 
     @Override
     public String toString() {
-        return "TcpServerConfig{label='" + label
-                + "', bindAddress='" + bindAddress
-                + "', port=" + port + "}";
+        return "TcpServerConfig{label='" + label + "', bindAddress='" + bindAddress + "', port=" + port + "}";
     }
 }

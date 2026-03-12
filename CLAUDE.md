@@ -26,13 +26,15 @@ Expected: config loads, WebSocket server and TCP server both log `ACTIVE`/listen
 
 ## Before every commit
 
-Always run the full test suite and confirm it passes before committing:
+Always reformat code and run the full test suite before committing:
 
 ```bash
+./gradlew --no-daemon spotlessApply   # reformat code and imports (Palantir style)
 ./gradlew --no-daemon test
 ```
 
-Do not commit if any tests fail.
+Do not commit if any tests fail. Run `spotlessApply` before `test` so that
+formatting changes are included in the same commit as the code changes.
 
 ## Key facts
 

@@ -1,5 +1,7 @@
 package net.aspekt.gateway.connection;
 
+import static org.junit.jupiter.api.Assertions.*;
+
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import io.netty.channel.DefaultChannelId;
@@ -7,8 +9,6 @@ import io.netty.channel.embedded.EmbeddedChannel;
 import net.aspekt.gateway.tcp.client.TcpClientEndpoint;
 import net.aspekt.gateway.tcp.server.TcpServerEndpoint;
 import org.junit.jupiter.api.Test;
-
-import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * Unit tests for {@link TcpServerEndpoint}.
@@ -64,7 +64,7 @@ class TcpServerEndpointTest {
     @Test
     void sendReleasesBufferImmediatelyWhenNoClientsConnected() {
         TcpServerEndpoint ep = new TcpServerEndpoint("tcp-srv-test");
-        ByteBuf buf = Unpooled.copiedBuffer(new byte[]{0x42});
+        ByteBuf buf = Unpooled.copiedBuffer(new byte[] {0x42});
         assertDoesNotThrow(() -> ep.send(buf));
         assertEquals(0, buf.refCnt(), "buffer should be released when no clients are connected");
     }
@@ -76,7 +76,7 @@ class TcpServerEndpointTest {
     @Test
     void onDataReceivedWithNoTargetsReleasesBuffer() {
         TcpServerEndpoint ep = new TcpServerEndpoint("tcp-srv-test");
-        ByteBuf buf = Unpooled.copiedBuffer(new byte[]{0x01});
+        ByteBuf buf = Unpooled.copiedBuffer(new byte[] {0x01});
         ep.onDataReceived(buf);
         assertEquals(0, buf.refCnt(), "buffer should be released when there are no targets");
     }
@@ -115,7 +115,7 @@ class TcpServerEndpointTest {
 
         client.close().sync();
 
-        ByteBuf buf = Unpooled.copiedBuffer(new byte[]{0x01});
+        ByteBuf buf = Unpooled.copiedBuffer(new byte[] {0x01});
         ep.send(buf);
         assertEquals(0, buf.refCnt(), "buffer should be released when group is empty after close");
     }

@@ -1,12 +1,12 @@
 package net.aspekt.gateway.connection;
 
+import static org.junit.jupiter.api.Assertions.*;
+
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import io.netty.channel.embedded.EmbeddedChannel;
 import net.aspekt.gateway.tcp.client.TcpClientEndpoint;
 import org.junit.jupiter.api.Test;
-
-import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * Unit tests for {@link TcpClientEndpoint}.
@@ -39,7 +39,7 @@ class TcpClientEndpointTest {
     @Test
     void sendReleasesBufferWhenChannelIsNull() {
         TcpClientEndpoint ep = new TcpClientEndpoint("tcp-test");
-        ByteBuf buf = Unpooled.copiedBuffer(new byte[]{0x42});
+        ByteBuf buf = Unpooled.copiedBuffer(new byte[] {0x42});
         assertDoesNotThrow(() -> ep.send(buf));
         assertEquals(0, buf.refCnt(), "buffer should be released when channel is null");
     }
@@ -51,7 +51,7 @@ class TcpClientEndpointTest {
         ep.setChannel(ch);
         ch.close().sync();
 
-        ByteBuf buf = Unpooled.copiedBuffer(new byte[]{0x42});
+        ByteBuf buf = Unpooled.copiedBuffer(new byte[] {0x42});
         assertDoesNotThrow(() -> ep.send(buf));
         assertEquals(0, buf.refCnt(), "buffer should be released when channel is inactive");
     }
@@ -67,7 +67,7 @@ class TcpClientEndpointTest {
 
         ep.setChannel(ch);
         // After setting, send should work
-        ByteBuf buf1 = Unpooled.copiedBuffer(new byte[]{0x01});
+        ByteBuf buf1 = Unpooled.copiedBuffer(new byte[] {0x01});
         ep.send(buf1);
         ByteBuf received = ch.readOutbound();
         assertNotNull(received);
@@ -75,7 +75,7 @@ class TcpClientEndpointTest {
 
         ep.clearChannel();
         // After clearing, send should drop
-        ByteBuf buf2 = Unpooled.copiedBuffer(new byte[]{0x02});
+        ByteBuf buf2 = Unpooled.copiedBuffer(new byte[] {0x02});
         ep.send(buf2);
         assertEquals(0, buf2.refCnt(), "buffer should be released after clearChannel");
 
@@ -89,7 +89,7 @@ class TcpClientEndpointTest {
     @Test
     void onDataReceivedWithNoTargetsReleasesBuffer() {
         TcpClientEndpoint ep = new TcpClientEndpoint("tcp-test");
-        ByteBuf buf = Unpooled.copiedBuffer(new byte[]{0x01});
+        ByteBuf buf = Unpooled.copiedBuffer(new byte[] {0x01});
         ep.onDataReceived(buf);
         assertEquals(0, buf.refCnt(), "buffer should be released when there are no targets");
     }
