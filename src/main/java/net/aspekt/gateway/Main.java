@@ -49,13 +49,13 @@ public class Main {
 
     public static void main(String[] args) throws Exception {
         if (args.length < 1) {
-            System.err.println("Usage: web-socket-gateway <config-file.xml>");
+            log.severe("Usage: web-socket-gateway <config-file.xml>");
             System.exit(1);
         }
 
         File configFile = new File(args[0]);
         if (!configFile.exists()) {
-            System.err.println("Config file not found: " + configFile.getAbsolutePath());
+            log.severe("Config file not found: " + configFile.getAbsolutePath());
             System.exit(1);
         }
 
