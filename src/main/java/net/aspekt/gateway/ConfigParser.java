@@ -49,11 +49,18 @@ public final class ConfigParser {
             Unmarshaller um = ctx.createUnmarshaller();
             um.setSchema(schema); // validation happens during unmarshal
             GatewayConfig config = (GatewayConfig) um.unmarshal(configFile);
-            log.log(Level.INFO, "Loaded {0} websocket-server(s), {1} tcp-client(s), {2} forward rule(s)", new Object[] {
-                config.getWebSocketServers().size(),
-                config.getTcpClients().size(),
-                config.getForwards().size()
-            });
+            log.log(
+                    Level.INFO,
+                    "Loaded {0} websocket-server(s), {1} tcp-server(s), {2} tcp-hub(s),"
+                            + " {3} tcp-client(s), {4} udp-multicast(s), {5} forward rule(s)",
+                    new Object[] {
+                        config.getWebSocketServers().size(),
+                        config.getTcpServers().size(),
+                        config.getTcpHubs().size(),
+                        config.getTcpClients().size(),
+                        config.getUdpMulticasts().size(),
+                        config.getForwards().size()
+                    });
             return config;
         } catch (JAXBException e) {
             throw new ConfigException("Failed to parse config file: " + configFile, e);
