@@ -15,6 +15,7 @@ public final class StartupBanner {
 
     private StartupBanner() {}
 
+    @SuppressWarnings("PMD.SystemPrintln")
     public static void print(String configPath) {
         System.out.printf(BANNER, configPath);
     }
