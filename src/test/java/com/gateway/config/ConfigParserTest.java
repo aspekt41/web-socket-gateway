@@ -150,7 +150,7 @@ class ConfigParserTest {
         assertEquals("localhost", tcp.getHost());
         assertEquals(9090, tcp.getPort());
 
-        assertEquals(2, cfg.getForwards().size());
+        assertEquals(4, cfg.getForwards().size());
     }
 
     // -----------------------------------------------------------------------
