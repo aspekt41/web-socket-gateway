@@ -1,0 +1,187 @@
+@startuml Web Socket Gateway – Architecture
+
+' ─────────────────────────────────────────────
+' Style
+' ─────────────────────────────────────────────
+skinparam defaultFontName monospaced
+skinparam backgroundColor #FAFAFA
+skinparam roundcorner 8
+
+skinparam package {
+  BackgroundColor #EEF4FF
+  BorderColor #7090C0
+  FontColor #1A2A4A
+}
+
+skinparam component {
+  BackgroundColor #FFFFFF
+  BorderColor #5070A0
+  FontColor #1A2A4A
+}
+
+skinparam interface {
+  BackgroundColor #FFF8DC
+  BorderColor #C0A020
+}
+
+skinparam arrow {
+  Color #4060A0
+  FontColor #4060A0
+  FontSize 10
+}
+
+skinparam note {
+  BackgroundColor #FFFDE7
+  BorderColor #C0A020
+}
+
+' ─────────────────────────────────────────────
+' External actors
+' ─────────────────────────────────────────────
+actor "Browser / JS Client" as BrowserClient
+actor "Raw TCP Client" as RawTCPClient
+actor "TCP Hub Peer" as HubPeer
+actor "Remote TCP Service" as RemoteTCP
+actor "UDP Multicast Network" as UDPNet
+
+' ─────────────────────────────────────────────
+' Application boundary
+' ─────────────────────────────────────────────
+package "web-socket-gateway (net.aspekt.gateway)" {
+
+  ' ── Startup / Config ──────────────────────
+  package "Startup & Configuration" {
+    component "Main" as Main <<entry point>>
+    component "ConfigParser" as ConfigParser
+    component "GatewayConfig\n(JAXB root)" as GatewayConfig
+    component "XSD Schema\n(gateway-config.xsd)" as XSD
+  }
+
+  ' ── Endpoint abstraction ──────────────────
+  package "Connection Endpoint Layer" {
+    interface "ConnectionEndpoint" as CE {
+      +send(ByteBuf)
+      +addTarget(ConnectionEndpoint)
+      +onDataReceived(ByteBuf)
+    }
+    component "AbstractConnectionEndpoint\n(fan-out, CopyOnWriteArrayList)" as ACE
+  }
+
+  ' ── Concrete endpoints ───────────────────
+  package "WebSocket (websocket/)" {
+    component "WebSocketServer\n(Netty NIO)" as WSServer
+    component "WebSocketServerHandler" as WSHandler
+    component "WebSocketEndpoint\n(ChannelGroup broadcast)" as WSEndpoint
+  }
+
+  package "TCP Server (tcp/server/)" {
+    component "TcpServer\n(Netty NIO)" as TCPServer
+    component "TcpServerHandler" as TCPSrvHandler
+    component "TcpServerEndpoint\n(ChannelGroup broadcast)" as TCPSrvEndpoint
+  }
+
+  package "TCP Client (tcp/client/)" {
+    component "TcpClient\n(Netty NIO, auto-reconnect)" as TCPClient
+    component "TcpClientHandler" as TCPCliHandler
+    component "TcpClientEndpoint\n(single channel)" as TCPCliEndpoint
+  }
+
+  package "TCP Hub (tcp/hub/)" {
+    component "TcpHub\n(Netty NIO)" as TCPHub
+    component "TcpHubHandler" as TCPHubHandler
+    component "TcpHubEndpoint\n(peer broadcast, excl. sender)" as TCPHubEndpoint
+  }
+
+  package "UDP Multicast (udp/multicast/)" {
+    component "UdpMulticast\n(Netty NioDatagramChannel)" as UDPMulticast
+    component "UdpMulticastHandler" as UDPHandler
+    component "UdpMulticastEndpoint\n(DatagramPacket to group)" as UDPEndpoint
+  }
+
+}
+
+' ─────────────────────────────────────────────
+' Inheritance
+' ─────────────────────────────────────────────
+CE <|.. ACE
+ACE <|-- WSEndpoint
+ACE <|-- TCPSrvEndpoint
+ACE <|-- TCPCliEndpoint
+ACE <|-- TCPHubEndpoint
+ACE <|-- UDPEndpoint
+
+' ─────────────────────────────────────────────
+' Startup wiring
+' ─────────────────────────────────────────────
+Main --> ConfigParser : parse & validate
+ConfigParser --> XSD : validates against
+ConfigParser --> GatewayConfig : produces
+Main --> GatewayConfig : reads endpoints\n& forward rules
+Main --> WSEndpoint : create & wire
+Main --> TCPSrvEndpoint : create & wire
+Main --> TCPCliEndpoint : create & wire
+Main --> TCPHubEndpoint : create & wire
+Main --> UDPEndpoint : create & wire
+
+' ─────────────────────────────────────────────
+' Server → Handler → Endpoint chains
+' ─────────────────────────────────────────────
+WSServer --> WSHandler : pipeline
+WSHandler --> WSEndpoint : onDataReceived()
+
+TCPServer --> TCPSrvHandler : pipeline
+TCPSrvHandler --> TCPSrvEndpoint : onDataReceived()
+
+TCPClient --> TCPCliHandler : pipeline
+TCPCliHandler --> TCPCliEndpoint : onDataReceived()
+
+TCPHub --> TCPHubHandler : pipeline
+TCPHubHandler --> TCPHubEndpoint : onDataReceived()
+
+UDPMulticast --> UDPHandler : pipeline
+UDPHandler --> UDPEndpoint : onDataReceived()
+
+' ─────────────────────────────────────────────
+' Fan-out forwarding (runtime data path)
+' ─────────────────────────────────────────────
+ACE -[#CC4400,dashed]-> CE : target.send(buf.retain())\n[fan-out to all targets]
+
+' ─────────────────────────────────────────────
+' External connections
+' ─────────────────────────────────────────────
+BrowserClient <--> WSServer : WebSocket\n(HTTP upgrade → binary frames)
+RawTCPClient <--> TCPServer : raw TCP bytes
+HubPeer <--> TCPHub : raw TCP bytes\n(peer broadcast)
+TCPClient <--> RemoteTCP : outbound TCP\n(auto-reconnect)
+UDPMulticast <--> UDPNet : UDP multicast datagrams\n(join/leave group)
+
+' ─────────────────────────────────────────────
+' Notes
+' ─────────────────────────────────────────────
+note right of ACE
+  onDataReceived(buf):
+    for each target:
+      target.send(buf.retain())
+    buf.release()
+end note
+
+note bottom of TCPCliEndpoint
+  Holds a single volatile
+  channel reference; drops
+  data while disconnected.
+end note
+
+note bottom of TCPHubEndpoint
+  Peer broadcast excludes the
+  originating channel via a
+  ChannelMatcher (O(1) check).
+end note
+
+note bottom of UDPEndpoint
+  Single NioDatagramChannel
+  shared for RX and TX.
+  Optionally bound to a
+  specific network interface.
+end note
+
+@enduml
