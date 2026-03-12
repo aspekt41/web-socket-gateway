@@ -1,9 +1,17 @@
 # Purpose
 
-The purpose of this project is to build a simple java application that bridges normal sockets to websockets.
+The primary purpose of this project is to build a simple java application that bridges
+different types of transport protocols together, so that applications
+can communicate binary data even when they don't support matching protocol types.
 
-When building for the browser, we can't just open up a connection to a TCP server, or subscribe to UDP multicast.
+A secondary purpose is to create a form of protocol diode, in which one-way
+forwarding rules will allow some applications to have full-duplex connectivity
+to an application, without the other application having full duplex connection
+back. This can be useful when you'd like have a one-way monitoring connection
+between two networks, with the guarantee that data can't flow backwards
+across the connection.
 
-This project aims to on one hand subscribe to TCP as a client, or create a TCP server, or subscribe to UDP multicast,
-and at the same time present a websocket connection. The goal of all this is that we can take data from the websocket
-and transfer it to the "legacy" socket, and the legacy socket data can be transferred into the websocket.
+Finally, this allows for websocket connections to be bridged down to traditional
+TCP connections or UDP connections, so that systems which are only coded to
+talk using traditional transport protocols can still exchange data with browser
+clients via the transport of binary websocket frames.
