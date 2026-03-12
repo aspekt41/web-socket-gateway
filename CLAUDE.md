@@ -21,6 +21,16 @@ timeout 10 build/install/web-socket-gateway/bin/web-socket-gateway example-confi
 
 Expected: config loads, WebSocket server and TCP server both log `ACTIVE`/listening lines, TCP client connects to localhost:9090, shutdown hook fires on timeout. Exit code 124 (killed by timeout) is normal.
 
+## Before every commit
+
+Always run the full test suite and confirm it passes before committing:
+
+```bash
+./gradlew test
+```
+
+Do not commit if any tests fail.
+
 ## Key facts
 
 - Main entry point: `com.gateway.Main`
