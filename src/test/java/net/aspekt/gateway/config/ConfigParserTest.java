@@ -1,5 +1,12 @@
 package net.aspekt.gateway.config;
 
+import static org.junit.jupiter.api.Assertions.*;
+
+import java.io.File;
+import java.net.URL;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.List;
 import net.aspekt.gateway.ConfigException;
 import net.aspekt.gateway.ConfigParser;
 import net.aspekt.gateway.ForwardConfig;
@@ -11,14 +18,6 @@ import net.aspekt.gateway.udp.multicast.UdpMulticastConfig;
 import net.aspekt.gateway.websocket.WebSocketServerConfig;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
-
-import java.io.File;
-import java.net.URL;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.util.List;
-
-import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * Tests for ConfigParser: schema validation, JAXB unmarshalling, and default values.
@@ -64,10 +63,10 @@ class ConfigParserTest {
 
         List<ForwardConfig> fwds = cfg.getForwards();
         assertEquals(2, fwds.size());
-        assertEquals("ws-one",  fwds.get(0).getFrom());
+        assertEquals("ws-one", fwds.get(0).getFrom());
         assertEquals("tcp-one", fwds.get(0).getTo());
         assertEquals("tcp-one", fwds.get(1).getFrom());
-        assertEquals("ws-one",  fwds.get(1).getTo());
+        assertEquals("ws-one", fwds.get(1).getTo());
     }
 
     // -----------------------------------------------------------------------
@@ -109,7 +108,7 @@ class ConfigParserTest {
         assertEquals("tcp-recv-only", cfg.getTcpClients().get(0).getLabel());
         // Only one forward rule — no return path
         assertEquals(1, cfg.getForwards().size());
-        assertEquals("ws-send-only",  cfg.getForwards().get(0).getFrom());
+        assertEquals("ws-send-only", cfg.getForwards().get(0).getFrom());
         assertEquals("tcp-recv-only", cfg.getForwards().get(0).getTo());
     }
 
@@ -125,13 +124,13 @@ class ConfigParserTest {
         assertEquals(2, cfg.getTcpClients().size());
         assertEquals(3, cfg.getForwards().size());
 
-        assertEquals("ws-alpha",   cfg.getWebSocketServers().get(0).getLabel());
-        assertEquals("ws-beta",    cfg.getWebSocketServers().get(1).getLabel());
-        assertEquals("/feed",      cfg.getWebSocketServers().get(1).getPath());
-        assertEquals("tcp-alpha",  cfg.getTcpClients().get(0).getLabel());
-        assertEquals("host-a",     cfg.getTcpClients().get(0).getHost());
-        assertEquals("tcp-beta",   cfg.getTcpClients().get(1).getLabel());
-        assertEquals(10,           cfg.getTcpClients().get(1).getReconnectDelaySeconds());
+        assertEquals("ws-alpha", cfg.getWebSocketServers().get(0).getLabel());
+        assertEquals("ws-beta", cfg.getWebSocketServers().get(1).getLabel());
+        assertEquals("/feed", cfg.getWebSocketServers().get(1).getPath());
+        assertEquals("tcp-alpha", cfg.getTcpClients().get(0).getLabel());
+        assertEquals("host-a", cfg.getTcpClients().get(0).getHost());
+        assertEquals("tcp-beta", cfg.getTcpClients().get(1).getLabel());
+        assertEquals(10, cfg.getTcpClients().get(1).getReconnectDelaySeconds());
     }
 
     // -----------------------------------------------------------------------
@@ -143,8 +142,7 @@ class ConfigParserTest {
         // Gradle sets the working directory to the project root when running tests.
         File exampleConfig = new File("example-config.xml");
 
-        assertTrue(exampleConfig.exists(),
-                "example-config.xml not found at " + exampleConfig.getAbsolutePath());
+        assertTrue(exampleConfig.exists(), "example-config.xml not found at " + exampleConfig.getAbsolutePath());
 
         GatewayConfig cfg = ConfigParser.parse(exampleConfig);
 
@@ -174,8 +172,8 @@ class ConfigParserTest {
         assertEquals(1, cfg.getTcpServers().size());
         TcpServerConfig ts = cfg.getTcpServers().get(0);
         assertEquals("raw-tcp-in", ts.getLabel());
-        assertEquals("0.0.0.0",    ts.getBindAddress(), "bind-address should default to 0.0.0.0");
-        assertEquals(7001,         ts.getPort());
+        assertEquals("0.0.0.0", ts.getBindAddress(), "bind-address should default to 0.0.0.0");
+        assertEquals(7001, ts.getPort());
 
         assertEquals(1, cfg.getTcpClients().size());
         assertEquals(2, cfg.getForwards().size());
@@ -195,16 +193,16 @@ class ConfigParserTest {
 
         assertEquals(1, cfg.getUdpMulticasts().size());
         UdpMulticastConfig um = cfg.getUdpMulticasts().get(0);
-        assertEquals("mcast-feed",  um.getLabel());
-        assertEquals("230.0.0.1",   um.getGroup());
-        assertEquals(4001,           um.getPort());
-        assertEquals("0.0.0.0",     um.getBindAddress());
-        assertEquals("lo",          um.getNetworkInterface());
+        assertEquals("mcast-feed", um.getLabel());
+        assertEquals("230.0.0.1", um.getGroup());
+        assertEquals(4001, um.getPort());
+        assertEquals("0.0.0.0", um.getBindAddress());
+        assertEquals("lo", um.getNetworkInterface());
 
         assertEquals(1, cfg.getTcpClients().size());
         assertEquals(2, cfg.getForwards().size());
         assertEquals("mcast-feed", cfg.getForwards().get(0).getFrom());
-        assertEquals("tcp-sink",   cfg.getForwards().get(0).getTo());
+        assertEquals("tcp-sink", cfg.getForwards().get(0).getTo());
     }
 
     // -----------------------------------------------------------------------
@@ -218,8 +216,8 @@ class ConfigParserTest {
         assertEquals(1, cfg.getUdpMulticasts().size());
         UdpMulticastConfig um = cfg.getUdpMulticasts().get(0);
         assertEquals("mcast-defaults", um.getLabel());
-        assertEquals("239.255.0.1",     um.getGroup());
-        assertEquals(5000,               um.getPort());
+        assertEquals("239.255.0.1", um.getGroup());
+        assertEquals(5000, um.getPort());
         assertEquals("0.0.0.0", um.getBindAddress(), "bind-address should default to 0.0.0.0");
         assertNull(um.getNetworkInterface(), "network-interface should be null when omitted");
     }
@@ -236,13 +234,13 @@ class ConfigParserTest {
         assertEquals(0, cfg.getTcpServers().size());
         assertEquals(1, cfg.getTcpHubs().size());
         TcpHubConfig hub = cfg.getTcpHubs().get(0);
-        assertEquals("chat-hub",    hub.getLabel());
-        assertEquals("127.0.0.1",  hub.getBindAddress());
-        assertEquals(7100,          hub.getPort());
+        assertEquals("chat-hub", hub.getLabel());
+        assertEquals("127.0.0.1", hub.getBindAddress());
+        assertEquals(7100, hub.getPort());
 
         assertEquals(1, cfg.getTcpClients().size());
         assertEquals(2, cfg.getForwards().size());
-        assertEquals("chat-hub",    cfg.getForwards().get(0).getFrom());
+        assertEquals("chat-hub", cfg.getForwards().get(0).getFrom());
         assertEquals("hub-backend", cfg.getForwards().get(0).getTo());
     }
 
@@ -252,15 +250,15 @@ class ConfigParserTest {
 
     @Test
     void rejectsMissingRequiredHostAttribute() {
-        ConfigException ex = assertThrows(ConfigException.class,
-                () -> ConfigParser.parse(fixture("invalid-missing-host.xml")));
+        ConfigException ex =
+                assertThrows(ConfigException.class, () -> ConfigParser.parse(fixture("invalid-missing-host.xml")));
         assertNotNull(ex.getMessage());
     }
 
     @Test
     void rejectsPortOutOfRange() {
-        ConfigException ex = assertThrows(ConfigException.class,
-                () -> ConfigParser.parse(fixture("invalid-port-zero.xml")));
+        ConfigException ex =
+                assertThrows(ConfigException.class, () -> ConfigParser.parse(fixture("invalid-port-zero.xml")));
         assertNotNull(ex.getMessage());
     }
 

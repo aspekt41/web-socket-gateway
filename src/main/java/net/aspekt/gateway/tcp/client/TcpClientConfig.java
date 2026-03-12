@@ -27,11 +27,25 @@ public class TcpClientConfig {
     @XmlAttribute(name = "connect-timeout-seconds")
     private int connectTimeoutSeconds = 10;
 
-    public String getLabel() { return label; }
-    public String getHost() { return host; }
-    public int getPort() { return port; }
-    public int getReconnectDelaySeconds() { return reconnectDelaySeconds; }
-    public int getConnectTimeoutSeconds() { return connectTimeoutSeconds; }
+    public String getLabel() {
+        return label;
+    }
+
+    public String getHost() {
+        return host;
+    }
+
+    public int getPort() {
+        return port;
+    }
+
+    public int getReconnectDelaySeconds() {
+        return reconnectDelaySeconds;
+    }
+
+    public int getConnectTimeoutSeconds() {
+        return connectTimeoutSeconds;
+    }
 
     @Override
     public String toString() {

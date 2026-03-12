@@ -29,11 +29,25 @@ public class UdpMulticastConfig {
     @XmlAttribute(name = "network-interface")
     private String networkInterface;
 
-    public String getLabel()            { return label; }
-    public String getGroup()            { return group; }
-    public int    getPort()             { return port; }
-    public String getBindAddress()      { return bindAddress; }
-    public String getNetworkInterface() { return networkInterface; }
+    public String getLabel() {
+        return label;
+    }
+
+    public String getGroup() {
+        return group;
+    }
+
+    public int getPort() {
+        return port;
+    }
+
+    public String getBindAddress() {
+        return bindAddress;
+    }
+
+    public String getNetworkInterface() {
+        return networkInterface;
+    }
 
     @Override
     public String toString() {

@@ -5,7 +5,6 @@ import io.netty.channel.*;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioSocketChannel;
-
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.logging.Logger;
@@ -40,7 +39,7 @@ public class TcpClient implements AutoCloseable {
     private final AtomicBoolean stopped = new AtomicBoolean(false);
 
     public TcpClient(TcpClientConfig config, TcpClientEndpoint endpoint) {
-        this.config   = config;
+        this.config = config;
         this.endpoint = endpoint;
     }
 
@@ -55,8 +54,7 @@ public class TcpClient implements AutoCloseable {
                 .group(eventLoopGroup)
                 .channel(NioSocketChannel.class)
                 .option(ChannelOption.SO_KEEPALIVE, true)
-                .option(ChannelOption.CONNECT_TIMEOUT_MILLIS,
-                        config.getConnectTimeoutSeconds() * 1000)
+                .option(ChannelOption.CONNECT_TIMEOUT_MILLIS, config.getConnectTimeoutSeconds() * 1000)
                 .handler(new ChannelInitializer<SocketChannel>() {
                     @Override
                     protected void initChannel(SocketChannel ch) {
@@ -101,8 +99,8 @@ public class TcpClient implements AutoCloseable {
             return;
         }
         long delaySeconds = config.getReconnectDelaySeconds();
-        log.info("[" + endpoint.getLabel() + "] Reconnecting to "
-                + config.getHost() + ":" + config.getPort() + " in " + delaySeconds + "s");
+        log.info("[" + endpoint.getLabel() + "] Reconnecting to " + config.getHost() + ":" + config.getPort() + " in "
+                + delaySeconds + "s");
         eventLoop.schedule(this::connect, delaySeconds, TimeUnit.SECONDS);
     }
 
@@ -114,22 +112,19 @@ public class TcpClient implements AutoCloseable {
         if (stopped.get()) {
             return;
         }
-        log.info("[" + endpoint.getLabel() + "] Connecting to "
-                + config.getHost() + ":" + config.getPort());
+        log.info("[" + endpoint.getLabel() + "] Connecting to " + config.getHost() + ":" + config.getPort());
 
-        bootstrap.connect(config.getHost(), config.getPort())
-                .addListener((ChannelFutureListener) future -> {
-                    if (future.isSuccess()) {
-                        channel = future.channel();
-                        log.info("[" + endpoint.getLabel() + "] Connected to "
-                                + config.getHost() + ":" + config.getPort());
-                    } else {
-                        log.warning("[" + endpoint.getLabel() + "] Connection to "
-                                + config.getHost() + ":" + config.getPort()
-                                + " failed: " + future.cause().getMessage()
-                                + ". Retrying in " + config.getReconnectDelaySeconds() + "s");
-                        scheduleReconnect(future.channel().eventLoop());
-                    }
-                });
+        bootstrap.connect(config.getHost(), config.getPort()).addListener((ChannelFutureListener) future -> {
+            if (future.isSuccess()) {
+                channel = future.channel();
+                log.info("[" + endpoint.getLabel() + "] Connected to " + config.getHost() + ":" + config.getPort());
+            } else {
+                log.warning("[" + endpoint.getLabel() + "] Connection to "
+                        + config.getHost() + ":" + config.getPort()
+                        + " failed: " + future.cause().getMessage()
+                        + ". Retrying in " + config.getReconnectDelaySeconds() + "s");
+                scheduleReconnect(future.channel().eventLoop());
+            }
+        });
     }
 }

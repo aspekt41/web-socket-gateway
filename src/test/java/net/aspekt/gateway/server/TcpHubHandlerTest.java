@@ -1,5 +1,7 @@
 package net.aspekt.gateway.server;
 
+import static org.junit.jupiter.api.Assertions.*;
+
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import io.netty.channel.embedded.EmbeddedChannel;
@@ -9,8 +11,6 @@ import net.aspekt.gateway.tcp.hub.TcpHubHandler;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-
-import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * Unit tests for {@link TcpHubHandler} using {@link EmbeddedChannel}.
@@ -22,15 +22,15 @@ import static org.junit.jupiter.api.Assertions.*;
  */
 class TcpHubHandlerTest {
 
-    private TcpHubEndpoint    hubEndpoint;
+    private TcpHubEndpoint hubEndpoint;
     private TcpClientEndpoint targetEndpoint;
-    private EmbeddedChannel   targetChannel;
-    private EmbeddedChannel   senderChannel;
+    private EmbeddedChannel targetChannel;
+    private EmbeddedChannel senderChannel;
 
     @BeforeEach
     void setUp() {
         targetEndpoint = new TcpClientEndpoint("hub-target");
-        targetChannel  = new EmbeddedChannel();
+        targetChannel = new EmbeddedChannel();
         targetEndpoint.setChannel(targetChannel);
 
         hubEndpoint = new TcpHubEndpoint("hub-handler-test");
@@ -60,8 +60,7 @@ class TcpHubHandlerTest {
         senderChannel.writeInbound(Unpooled.copiedBuffer(data));
 
         ByteBuf received = targetChannel.readOutbound();
-        assertNotNull(received,
-                "forwarding target should receive data routed through hub handler");
+        assertNotNull(received, "forwarding target should receive data routed through hub handler");
         received.release();
     }
 

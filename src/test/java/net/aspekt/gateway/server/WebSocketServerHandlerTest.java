@@ -1,5 +1,7 @@
 package net.aspekt.gateway.server;
 
+import static org.junit.jupiter.api.Assertions.*;
+
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import io.netty.channel.embedded.EmbeddedChannel;
@@ -11,8 +13,6 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import static org.junit.jupiter.api.Assertions.*;
-
 /**
  * Unit tests for WebSocketServerHandler using EmbeddedChannel for synchronous I/O.
  *
@@ -23,14 +23,14 @@ import static org.junit.jupiter.api.Assertions.*;
 class WebSocketServerHandlerTest {
 
     private TcpClientEndpoint tcpEndpoint; // downstream target
-    private EmbeddedChannel   tcpChannel;  // fake TCP channel
-    private WebSocketEndpoint wsEndpoint;  // endpoint under test
-    private EmbeddedChannel   wsChannel;   // WS channel under test
+    private EmbeddedChannel tcpChannel; // fake TCP channel
+    private WebSocketEndpoint wsEndpoint; // endpoint under test
+    private EmbeddedChannel wsChannel; // WS channel under test
 
     @BeforeEach
     void setUp() {
         tcpEndpoint = new TcpClientEndpoint("tcp-test");
-        tcpChannel  = new EmbeddedChannel();
+        tcpChannel = new EmbeddedChannel();
         tcpEndpoint.setChannel(tcpChannel);
 
         wsEndpoint = new WebSocketEndpoint("ws-test");
@@ -91,7 +91,7 @@ class WebSocketServerHandlerTest {
     void frameDroppedWithoutExceptionWhenTcpChannelIsNull() {
         tcpEndpoint.clearChannel();
         assertDoesNotThrow(() ->
-                wsChannel.writeInbound(new BinaryWebSocketFrame(Unpooled.copiedBuffer(new byte[]{(byte) 0xAA}))));
+                wsChannel.writeInbound(new BinaryWebSocketFrame(Unpooled.copiedBuffer(new byte[] {(byte) 0xAA}))));
         // Nothing should arrive at the TCP side
         assertNull(tcpChannel.readOutbound());
     }
@@ -101,7 +101,7 @@ class WebSocketServerHandlerTest {
         tcpChannel.close().sync();
         // endpoint still holds the closed channel reference; send() checks isActive()
         assertDoesNotThrow(() ->
-                wsChannel.writeInbound(new BinaryWebSocketFrame(Unpooled.copiedBuffer(new byte[]{(byte) 0xBB}))));
+                wsChannel.writeInbound(new BinaryWebSocketFrame(Unpooled.copiedBuffer(new byte[] {(byte) 0xBB}))));
         assertNull(tcpChannel.readOutbound());
     }
 
@@ -111,7 +111,7 @@ class WebSocketServerHandlerTest {
 
     @Test
     void pingFrameReceivesPongResponse() {
-        wsChannel.writeInbound(new PingWebSocketFrame(Unpooled.copiedBuffer(new byte[]{0x42})));
+        wsChannel.writeInbound(new PingWebSocketFrame(Unpooled.copiedBuffer(new byte[] {0x42})));
 
         PongWebSocketFrame pong = wsChannel.readOutbound();
         assertNotNull(pong, "handler should respond to PingWebSocketFrame with PongWebSocketFrame");
@@ -120,7 +120,7 @@ class WebSocketServerHandlerTest {
 
     @Test
     void pingPongDoesNotForwardToTcpChannel() {
-        wsChannel.writeInbound(new PingWebSocketFrame(Unpooled.copiedBuffer(new byte[]{0x01})));
+        wsChannel.writeInbound(new PingWebSocketFrame(Unpooled.copiedBuffer(new byte[] {0x01})));
         // drain the pong
         PongWebSocketFrame pong = wsChannel.readOutbound();
         if (pong != null) pong.release();
@@ -154,13 +154,13 @@ class WebSocketServerHandlerTest {
     void unknownFrameTypeIsDroppedWithoutException() {
         // PongWebSocketFrame is not handled by the server handler (it handles ping only).
         // Sending one exercises the final else-branch: log.warning + no forwarding.
-        assertDoesNotThrow(() ->
-                wsChannel.writeInbound(new PongWebSocketFrame(Unpooled.copiedBuffer(new byte[]{0x00}))));
+        assertDoesNotThrow(
+                () -> wsChannel.writeInbound(new PongWebSocketFrame(Unpooled.copiedBuffer(new byte[] {0x00}))));
     }
 
     @Test
     void unknownFrameTypeDoesNotForwardToTcpChannel() {
-        wsChannel.writeInbound(new PongWebSocketFrame(Unpooled.copiedBuffer(new byte[]{0x00})));
+        wsChannel.writeInbound(new PongWebSocketFrame(Unpooled.copiedBuffer(new byte[] {0x00})));
         assertNull(tcpChannel.readOutbound(), "unhandled frame must not be forwarded to TCP");
     }
 

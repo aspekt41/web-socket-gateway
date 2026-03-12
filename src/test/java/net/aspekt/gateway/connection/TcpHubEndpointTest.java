@@ -1,5 +1,7 @@
 package net.aspekt.gateway.connection;
 
+import static org.junit.jupiter.api.Assertions.*;
+
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import io.netty.channel.DefaultChannelId;
@@ -7,8 +9,6 @@ import io.netty.channel.embedded.EmbeddedChannel;
 import net.aspekt.gateway.tcp.client.TcpClientEndpoint;
 import net.aspekt.gateway.tcp.hub.TcpHubEndpoint;
 import org.junit.jupiter.api.Test;
-
-import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * Unit tests for {@link TcpHubEndpoint}.
@@ -84,7 +84,7 @@ class TcpHubEndpointTest {
     void onHubDataReceivedSendsToOtherClientsAndTargets() {
         TcpHubEndpoint hub = new TcpHubEndpoint("hub-test");
         EmbeddedChannel sender = new EmbeddedChannel(DefaultChannelId.newInstance());
-        EmbeddedChannel peer   = new EmbeddedChannel(DefaultChannelId.newInstance());
+        EmbeddedChannel peer = new EmbeddedChannel(DefaultChannelId.newInstance());
         hub.addChannel(sender);
         hub.addChannel(peer);
 
@@ -117,7 +117,7 @@ class TcpHubEndpointTest {
         EmbeddedChannel sender = new EmbeddedChannel();
         ep.addChannel(sender);
 
-        ByteBuf buf = Unpooled.copiedBuffer(new byte[]{0x42});
+        ByteBuf buf = Unpooled.copiedBuffer(new byte[] {0x42});
         ep.onHubDataReceived(sender, buf);
         assertEquals(0, buf.refCnt(), "buffer should be released when no peers or targets");
 
@@ -176,7 +176,7 @@ class TcpHubEndpointTest {
     @Test
     void sendReleasesBufferWhenNoClientsConnected() {
         TcpHubEndpoint ep = new TcpHubEndpoint("hub-test");
-        ByteBuf buf = Unpooled.copiedBuffer(new byte[]{0x42});
+        ByteBuf buf = Unpooled.copiedBuffer(new byte[] {0x42});
         ep.send(buf);
         assertEquals(0, buf.refCnt(), "buffer should be released when no clients are connected");
     }
@@ -196,7 +196,7 @@ class TcpHubEndpointTest {
         client.close().sync();
 
         // Only sender in group; sender sends — no recipients, buf must be released
-        ByteBuf buf = Unpooled.copiedBuffer(new byte[]{0x01});
+        ByteBuf buf = Unpooled.copiedBuffer(new byte[] {0x01});
         ep.onHubDataReceived(sender, buf);
         assertEquals(0, buf.refCnt(), "buffer should be released when only sender remains in group");
 

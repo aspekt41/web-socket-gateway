@@ -3,7 +3,6 @@ package net.aspekt.gateway.tcp.hub;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
-
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -56,8 +55,11 @@ public class TcpHubHandler extends ChannelInboundHandlerAdapter {
 
     @Override
     public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) {
-        log.log(Level.SEVERE, "[" + endpoint.getLabel() + "] Exception on hub client channel "
-                + ctx.channel().remoteAddress(), cause);
+        log.log(
+                Level.SEVERE,
+                "[" + endpoint.getLabel() + "] Exception on hub client channel "
+                        + ctx.channel().remoteAddress(),
+                cause);
         ctx.close();
     }
 }

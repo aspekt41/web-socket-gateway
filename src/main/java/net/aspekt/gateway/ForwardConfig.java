@@ -19,8 +19,13 @@ public class ForwardConfig {
     @XmlAttribute(name = "to", required = true)
     private String to;
 
-    public String getFrom() { return from; }
-    public String getTo()   { return to; }
+    public String getFrom() {
+        return from;
+    }
+
+    public String getTo() {
+        return to;
+    }
 
     @Override
     public String toString() {

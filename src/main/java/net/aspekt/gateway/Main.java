@@ -1,5 +1,12 @@
 package net.aspekt.gateway;
 
+import java.io.File;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import net.aspekt.gateway.tcp.client.TcpClient;
 import net.aspekt.gateway.tcp.client.TcpClientConfig;
 import net.aspekt.gateway.tcp.client.TcpClientEndpoint;
@@ -15,14 +22,6 @@ import net.aspekt.gateway.udp.multicast.UdpMulticastEndpoint;
 import net.aspekt.gateway.websocket.WebSocketEndpoint;
 import net.aspekt.gateway.websocket.WebSocketServer;
 import net.aspekt.gateway.websocket.WebSocketServerConfig;
-
-import java.io.File;
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 /**
  * Application entry point.
@@ -73,11 +72,11 @@ public class Main {
         // 1. Create endpoints and register them by label
         // ----------------------------------------------------------------
         Map<String, ConnectionEndpoint> registry = new LinkedHashMap<>();
-        List<WebSocketServer> wsServers     = new ArrayList<>();
-        List<TcpServer>       tcpServers    = new ArrayList<>();
-        List<TcpHub>          tcpHubs       = new ArrayList<>();
-        List<TcpClient>       tcpClients    = new ArrayList<>();
-        List<UdpMulticast>    udpMulticasts = new ArrayList<>();
+        List<WebSocketServer> wsServers = new ArrayList<>();
+        List<TcpServer> tcpServers = new ArrayList<>();
+        List<TcpHub> tcpHubs = new ArrayList<>();
+        List<TcpClient> tcpClients = new ArrayList<>();
+        List<UdpMulticast> udpMulticasts = new ArrayList<>();
 
         for (WebSocketServerConfig wsCfg : config.getWebSocketServers()) {
             if (registry.containsKey(wsCfg.getLabel())) {
@@ -125,8 +124,7 @@ public class Main {
                 System.exit(1);
             }
             UdpMulticastEndpoint ep = new UdpMulticastEndpoint(
-                    umCfg.getLabel(),
-                    new java.net.InetSocketAddress(umCfg.getGroup(), umCfg.getPort()));
+                    umCfg.getLabel(), new java.net.InetSocketAddress(umCfg.getGroup(), umCfg.getPort()));
             registry.put(umCfg.getLabel(), ep);
             udpMulticasts.add(new UdpMulticast(umCfg, ep));
         }
@@ -153,7 +151,8 @@ public class Main {
         // 3. Start all components
         // ----------------------------------------------------------------
         if (wsServers.isEmpty() && tcpServers.isEmpty() && tcpHubs.isEmpty() && udpMulticasts.isEmpty()) {
-            log.warning("No server entries (websocket-server, tcp-server, tcp-hub, or udp-multicast) found in config — exiting.");
+            log.warning(
+                    "No server entries (websocket-server, tcp-server, tcp-hub, or udp-multicast) found in config — exiting.");
             System.exit(0);
         }
 
@@ -174,14 +173,17 @@ public class Main {
         }
 
         // Register shutdown hook to release resources cleanly on SIGINT / SIGTERM
-        Runtime.getRuntime().addShutdownHook(new Thread(() -> {
-            log.info("Shutdown hook triggered — stopping all components");
-            tcpClients.forEach(TcpClient::stop);
-            udpMulticasts.forEach(UdpMulticast::stop);
-            wsServers.forEach(WebSocketServer::stop);
-            tcpServers.forEach(TcpServer::stop);
-            tcpHubs.forEach(TcpHub::stop);
-        }, "shutdown-hook"));
+        Runtime.getRuntime()
+                .addShutdownHook(new Thread(
+                        () -> {
+                            log.info("Shutdown hook triggered — stopping all components");
+                            tcpClients.forEach(TcpClient::stop);
+                            udpMulticasts.forEach(UdpMulticast::stop);
+                            wsServers.forEach(WebSocketServer::stop);
+                            tcpServers.forEach(TcpServer::stop);
+                            tcpHubs.forEach(TcpHub::stop);
+                        },
+                        "shutdown-hook"));
 
         // Block the main thread until the first server channel closes.
         if (!wsServers.isEmpty()) {

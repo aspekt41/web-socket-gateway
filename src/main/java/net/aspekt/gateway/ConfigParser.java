@@ -3,14 +3,13 @@ package net.aspekt.gateway;
 import jakarta.xml.bind.JAXBContext;
 import jakarta.xml.bind.JAXBException;
 import jakarta.xml.bind.Unmarshaller;
-import org.xml.sax.SAXException;
-
-import javax.xml.XMLConstants;
-import javax.xml.validation.Schema;
-import javax.xml.validation.SchemaFactory;
 import java.io.File;
 import java.net.URL;
 import java.util.logging.Logger;
+import javax.xml.XMLConstants;
+import javax.xml.validation.Schema;
+import javax.xml.validation.SchemaFactory;
+import org.xml.sax.SAXException;
 
 /**
  * Parses a gateway configuration XML file into a {@link GatewayConfig} model.
@@ -47,15 +46,14 @@ public final class ConfigParser {
 
         try {
             Unmarshaller um = ctx.createUnmarshaller();
-            um.setSchema(schema);  // validation happens during unmarshal
+            um.setSchema(schema); // validation happens during unmarshal
             GatewayConfig config = (GatewayConfig) um.unmarshal(configFile);
             log.info("Loaded " + config.getWebSocketServers().size() + " websocket-server(s), "
                     + config.getTcpClients().size() + " tcp-client(s), "
                     + config.getForwards().size() + " forward rule(s)");
             return config;
         } catch (JAXBException e) {
-            throw new ConfigException(
-                    "Failed to parse config file: " + configFile, e);
+            throw new ConfigException("Failed to parse config file: " + configFile, e);
         }
     }
 
@@ -66,8 +64,7 @@ public final class ConfigParser {
     private static Schema loadSchema() throws ConfigException {
         URL schemaUrl = ConfigParser.class.getResource(SCHEMA_RESOURCE);
         if (schemaUrl == null) {
-            throw new ConfigException(
-                    "Bundled XSD schema not found on classpath: " + SCHEMA_RESOURCE);
+            throw new ConfigException("Bundled XSD schema not found on classpath: " + SCHEMA_RESOURCE);
         }
         SchemaFactory sf = SchemaFactory.newInstance(XMLConstants.W3C_XML_SCHEMA_NS_URI);
         try {

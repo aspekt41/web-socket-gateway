@@ -3,9 +3,8 @@ package net.aspekt.gateway.udp.multicast;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.Channel;
 import io.netty.channel.socket.DatagramPacket;
-import net.aspekt.gateway.AbstractConnectionEndpoint;
-
 import java.net.InetSocketAddress;
+import net.aspekt.gateway.AbstractConnectionEndpoint;
 
 /**
  * Connection endpoint that delivers data to a UDP multicast group.

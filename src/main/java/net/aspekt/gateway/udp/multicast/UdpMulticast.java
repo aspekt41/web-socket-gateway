@@ -7,7 +7,6 @@ import io.netty.channel.ChannelOption;
 import io.netty.channel.EventLoopGroup;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.nio.NioDatagramChannel;
-
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.NetworkInterface;
@@ -40,7 +39,7 @@ public class UdpMulticast implements AutoCloseable {
     private NioDatagramChannel channel;
 
     public UdpMulticast(UdpMulticastConfig config, UdpMulticastEndpoint endpoint) {
-        this.config   = config;
+        this.config = config;
         this.endpoint = endpoint;
     }
 

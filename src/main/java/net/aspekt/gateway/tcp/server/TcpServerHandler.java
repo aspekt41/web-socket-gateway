@@ -3,10 +3,9 @@ package net.aspekt.gateway.tcp.server;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
-import net.aspekt.gateway.tcp.client.TcpClientHandler;
-
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import net.aspekt.gateway.tcp.client.TcpClientHandler;
 
 /**
  * Handles inbound bytes from a raw TCP client connected to the {@link TcpServer}.
@@ -57,8 +56,11 @@ public class TcpServerHandler extends ChannelInboundHandlerAdapter {
 
     @Override
     public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) {
-        log.log(Level.SEVERE, "[" + endpoint.getLabel() + "] Exception on TCP client channel "
-                + ctx.channel().remoteAddress(), cause);
+        log.log(
+                Level.SEVERE,
+                "[" + endpoint.getLabel() + "] Exception on TCP client channel "
+                        + ctx.channel().remoteAddress(),
+                cause);
         ctx.close();
     }
 }

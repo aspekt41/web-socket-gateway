@@ -1,5 +1,7 @@
 package net.aspekt.gateway.connection;
 
+import static org.junit.jupiter.api.Assertions.*;
+
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import io.netty.channel.DefaultChannelId;
@@ -8,8 +10,6 @@ import io.netty.handler.codec.http.websocketx.BinaryWebSocketFrame;
 import net.aspekt.gateway.tcp.client.TcpClientEndpoint;
 import net.aspekt.gateway.websocket.WebSocketEndpoint;
 import org.junit.jupiter.api.Test;
-
-import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * Unit tests for {@link WebSocketEndpoint}.
@@ -66,7 +66,7 @@ class WebSocketEndpointTest {
     @Test
     void sendReleasesBufferImmediatelyWhenNoClientsConnected() {
         WebSocketEndpoint ep = new WebSocketEndpoint("ws-test");
-        ByteBuf buf = Unpooled.copiedBuffer(new byte[]{0x42});
+        ByteBuf buf = Unpooled.copiedBuffer(new byte[] {0x42});
         assertDoesNotThrow(() -> ep.send(buf));
         // buf.refCnt() should be 0 after release
         assertEquals(0, buf.refCnt(), "buffer should be released when no clients are connected");
@@ -79,7 +79,7 @@ class WebSocketEndpointTest {
     @Test
     void onDataReceivedWithNoTargetsReleasesBuffer() {
         WebSocketEndpoint ep = new WebSocketEndpoint("ws-test");
-        ByteBuf buf = Unpooled.copiedBuffer(new byte[]{0x01});
+        ByteBuf buf = Unpooled.copiedBuffer(new byte[] {0x01});
         ep.onDataReceived(buf);
         assertEquals(0, buf.refCnt(), "buffer should be released when there are no targets");
     }
@@ -119,7 +119,7 @@ class WebSocketEndpointTest {
         client.close().sync();
 
         // After close, the channel group should be empty; send() should release
-        ByteBuf buf = Unpooled.copiedBuffer(new byte[]{0x01});
+        ByteBuf buf = Unpooled.copiedBuffer(new byte[] {0x01});
         ep.send(buf);
         assertEquals(0, buf.refCnt(), "buffer should be released when group is empty after close");
     }

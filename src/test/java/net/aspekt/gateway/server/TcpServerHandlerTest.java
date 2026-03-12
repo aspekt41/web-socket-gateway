@@ -1,5 +1,7 @@
 package net.aspekt.gateway.server;
 
+import static org.junit.jupiter.api.Assertions.*;
+
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import io.netty.channel.embedded.EmbeddedChannel;
@@ -10,8 +12,6 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import static org.junit.jupiter.api.Assertions.*;
-
 /**
  * Unit tests for {@link TcpServerHandler} using {@link EmbeddedChannel}.
  *
@@ -21,14 +21,14 @@ import static org.junit.jupiter.api.Assertions.*;
 class TcpServerHandlerTest {
 
     private TcpClientEndpoint tcpClientEndpoint;
-    private EmbeddedChannel   tcpClientChannel;
+    private EmbeddedChannel tcpClientChannel;
     private TcpServerEndpoint tcpServerEndpoint;
-    private EmbeddedChannel   serverSideChannel;
+    private EmbeddedChannel serverSideChannel;
 
     @BeforeEach
     void setUp() {
         tcpClientEndpoint = new TcpClientEndpoint("tcp-target");
-        tcpClientChannel  = new EmbeddedChannel();
+        tcpClientChannel = new EmbeddedChannel();
         tcpClientEndpoint.setChannel(tcpClientChannel);
 
         tcpServerEndpoint = new TcpServerEndpoint("tcp-server-test");
@@ -76,16 +76,14 @@ class TcpServerHandlerTest {
     @Test
     void bytesDroppedWithoutExceptionWhenDownstreamIsNull() {
         tcpClientEndpoint.clearChannel();
-        assertDoesNotThrow(() ->
-                serverSideChannel.writeInbound(Unpooled.copiedBuffer(new byte[]{(byte) 0xAA})));
+        assertDoesNotThrow(() -> serverSideChannel.writeInbound(Unpooled.copiedBuffer(new byte[] {(byte) 0xAA})));
         assertNull(tcpClientChannel.readOutbound());
     }
 
     @Test
     void bytesDroppedWithoutExceptionWhenDownstreamIsClosed() throws Exception {
         tcpClientChannel.close().sync();
-        assertDoesNotThrow(() ->
-                serverSideChannel.writeInbound(Unpooled.copiedBuffer(new byte[]{(byte) 0xBB})));
+        assertDoesNotThrow(() -> serverSideChannel.writeInbound(Unpooled.copiedBuffer(new byte[] {(byte) 0xBB})));
         assertNull(tcpClientChannel.readOutbound());
     }
 

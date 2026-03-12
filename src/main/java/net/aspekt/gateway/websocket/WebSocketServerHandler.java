@@ -4,7 +4,6 @@ import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
 import io.netty.handler.codec.http.websocketx.*;
-
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -64,8 +63,11 @@ public class WebSocketServerHandler extends SimpleChannelInboundHandler<WebSocke
 
     @Override
     public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) {
-        log.log(Level.SEVERE, "[" + endpoint.getLabel() + "] Exception on WebSocket channel "
-                + ctx.channel().remoteAddress(), cause);
+        log.log(
+                Level.SEVERE,
+                "[" + endpoint.getLabel() + "] Exception on WebSocket channel "
+                        + ctx.channel().remoteAddress(),
+                cause);
         ctx.close();
     }
 }

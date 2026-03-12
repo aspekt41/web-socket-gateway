@@ -11,7 +11,6 @@ import io.netty.handler.codec.http.websocketx.WebSocketServerProtocolHandler;
 import io.netty.handler.codec.http.websocketx.extensions.compression.WebSocketServerCompressionHandler;
 import io.netty.handler.logging.LogLevel;
 import io.netty.handler.logging.LoggingHandler;
-
 import java.net.InetSocketAddress;
 import java.util.logging.Logger;
 
@@ -45,7 +44,7 @@ public class WebSocketServer implements AutoCloseable {
     private Channel serverChannel;
 
     public WebSocketServer(WebSocketServerConfig config, WebSocketEndpoint endpoint) {
-        this.config   = config;
+        this.config = config;
         this.endpoint = endpoint;
     }
 
@@ -57,7 +56,7 @@ public class WebSocketServer implements AutoCloseable {
      *                              waiting for the bind to complete
      */
     public void start() throws InterruptedException {
-        bossGroup   = new NioEventLoopGroup(1);
+        bossGroup = new NioEventLoopGroup(1);
         workerGroup = new NioEventLoopGroup();
 
         ServerBootstrap bootstrap = new ServerBootstrap()
