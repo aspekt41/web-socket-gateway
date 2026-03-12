@@ -5,6 +5,7 @@ import jakarta.xml.bind.JAXBException;
 import jakarta.xml.bind.Unmarshaller;
 import java.io.File;
 import java.net.URL;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.xml.XMLConstants;
 import javax.xml.validation.Schema;
@@ -39,7 +40,7 @@ public final class ConfigParser {
      *                         validation, or cannot be unmarshalled
      */
     public static GatewayConfig parse(File configFile) throws ConfigException {
-        log.info("Loading gateway config from: " + configFile.getAbsolutePath());
+        log.log(Level.INFO, "Loading gateway config from: {0}", configFile.getAbsolutePath());
 
         Schema schema = loadSchema();
         JAXBContext ctx = createJaxbContext();
@@ -48,9 +49,18 @@ public final class ConfigParser {
             Unmarshaller um = ctx.createUnmarshaller();
             um.setSchema(schema); // validation happens during unmarshal
             GatewayConfig config = (GatewayConfig) um.unmarshal(configFile);
-            log.info("Loaded " + config.getWebSocketServers().size() + " websocket-server(s), "
-                    + config.getTcpClients().size() + " tcp-client(s), "
-                    + config.getForwards().size() + " forward rule(s)");
+            log.log(
+                    Level.INFO,
+                    "Loaded {0} websocket-server(s), {1} tcp-server(s), {2} tcp-hub(s),"
+                            + " {3} tcp-client(s), {4} udp-multicast(s), {5} forward rule(s)",
+                    new Object[] {
+                        config.getWebSocketServers().size(),
+                        config.getTcpServers().size(),
+                        config.getTcpHubs().size(),
+                        config.getTcpClients().size(),
+                        config.getUdpMulticasts().size(),
+                        config.getForwards().size()
+                    });
             return config;
         } catch (JAXBException e) {
             throw new ConfigException("Failed to parse config file: " + configFile, e);
@@ -62,21 +72,27 @@ public final class ConfigParser {
     // ------------------------------------------------------------------
 
     private static Schema loadSchema() throws ConfigException {
+        log.log(Level.FINE, "Loading XSD schema from classpath: {0}", SCHEMA_RESOURCE);
         URL schemaUrl = ConfigParser.class.getResource(SCHEMA_RESOURCE);
         if (schemaUrl == null) {
             throw new ConfigException("Bundled XSD schema not found on classpath: " + SCHEMA_RESOURCE);
         }
         SchemaFactory sf = SchemaFactory.newInstance(XMLConstants.W3C_XML_SCHEMA_NS_URI);
         try {
-            return sf.newSchema(schemaUrl);
+            Schema schema = sf.newSchema(schemaUrl);
+            log.log(Level.FINE, "XSD schema loaded successfully");
+            return schema;
         } catch (SAXException e) {
             throw new ConfigException("Failed to load XSD schema", e);
         }
     }
 
     private static JAXBContext createJaxbContext() throws ConfigException {
+        log.log(Level.FINE, "Creating JAXB context for {0}", GatewayConfig.class.getName());
         try {
-            return JAXBContext.newInstance(GatewayConfig.class);
+            JAXBContext ctx = JAXBContext.newInstance(GatewayConfig.class);
+            log.log(Level.FINE, "JAXB context created successfully");
+            return ctx;
         } catch (JAXBException e) {
             throw new ConfigException("Failed to create JAXB context", e);
         }
