@@ -53,6 +53,8 @@ public class Main {
             System.exit(1);
         }
 
+        StartupBanner.print(args[0]);
+
         File configFile = new File(args[0]);
         if (!configFile.exists()) {
             log.severe("Config file not found: " + configFile.getAbsolutePath());
