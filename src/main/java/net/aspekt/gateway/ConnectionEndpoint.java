@@ -35,6 +35,9 @@ public interface ConnectionEndpoint {
      */
     void addTarget(ConnectionEndpoint target);
 
+    /** Removes a previously registered forwarding target. No-op if not present. */
+    void removeTarget(ConnectionEndpoint target);
+
     /** Returns an immutable snapshot of the current forwarding targets. */
     List<ConnectionEndpoint> getTargets();
 

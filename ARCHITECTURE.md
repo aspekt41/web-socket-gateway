@@ -97,12 +97,15 @@ sender is excluded from the peer broadcast to prevent echo-back.
 
 ```
 net.aspekt.gateway
-├── Main.java                        Entry point; reads config, wires endpoints, starts all components
+├── Main.java                        Entry point; reads config, delegates construction to GatewayModelBuilder, starts all components
 ├── GatewayConfig                    JAXB root element (<gateway-config>)
 ├── ConfigParser                     Loads and validates the XML config file
 ├── ConfigException                  Checked exception for config errors
 ├── ForwardConfig                    JAXB model for <forward from="…" to="…"/>
-├── ConnectionEndpoint               Interface: send, addTarget, onDataReceived
+├── ForwardRule                      Runtime value record for a wired forwarding rule (from, to labels)
+├── GatewayModel                     Runtime topology: labeled endpoint registry + forwarding rules
+├── GatewayModelBuilder              Translates GatewayConfig into a GatewayModel; retains typed component lists
+├── ConnectionEndpoint               Interface: send, addTarget, removeTarget, onDataReceived
 ├── AbstractConnectionEndpoint       Base class: label, thread-safe target list, fan-out logic
 ├── websocket/
 │   ├── WebSocketServerConfig        JAXB model for <websocket-server>
@@ -133,11 +136,13 @@ net.aspekt.gateway
 
 ## Data Flow
 
-At startup `Main` creates a `ConnectionEndpoint` for every labeled element in the
-config and registers it in a map keyed by label.  It then walks the `<forward>`
-rules and calls `endpoint.addTarget(other)` to wire the graph.  After wiring, all
-servers and clients are started.  If no connection entries of any kind are present
-in the config, the gateway logs a warning and exits with code 0.
+At startup `Main` delegates construction to `GatewayModelBuilder`, which creates a
+`ConnectionEndpoint` for every labeled element in the config and registers it in a
+`GatewayModel`.  The builder then walks the `<forward>` rules and calls
+`model.addForwardRule(from, to)`, which wires the targets on the live endpoint
+objects.  `Main` retrieves the typed component lists from the builder, then starts
+all servers and clients.  If no connection entries of any kind are present in the
+config, the gateway logs a warning and exits with code 0.
 
 At runtime, when bytes arrive at any endpoint its handler calls
 `endpoint.onDataReceived(buf)`.  `AbstractConnectionEndpoint.onDataReceived` fans
