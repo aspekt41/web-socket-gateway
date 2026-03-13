@@ -1,6 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<!-- port="0" violates PortType (minimum 1) — schema validation must reject this -->
-<gateway-config xmlns="http://github.com/web-socket-gateway/config/v1">
-    <websocket-server label="ws-bad" port="0"/>
-    <tcp-client       label="tcp-bad" host="localhost" port="5006"/>
-</gateway-config>

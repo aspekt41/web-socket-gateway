@@ -1,9 +1,0 @@
-# Creating a Proper MVC Model
-
-- [ ] All connection objects stored in a model
-    - [X] Make all connections implement a start() interface
-    - [X] Make all connections return their endpoints from interface
-    - [ ] Connections should be created by factories from configs
-        - [X] Current configs should be clarified as XML configs
-        - [X] Current configs should implement config interface
-        - [X] Change connections to depend on config interfaces

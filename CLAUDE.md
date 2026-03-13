@@ -11,6 +11,7 @@ background daemon processes in CI-like environments.
 ./gradlew --no-daemon build        # compile + test
 ./gradlew --no-daemon run --args="example-config.xml"   # run the application
 ./gradlew --no-daemon test         # run tests only
+./gradlew --no-daemon spotlessApply   # reformat code and imports (Palantir style)
 ```
 
 ## Smoke test
@@ -26,11 +27,11 @@ Expected: config loads, WebSocket server and TCP server both log `ACTIVE`/listen
 
 ## Before every commit
 
-Always reformat code and run the full test suite before committing:
+Always reformat code and run a build before committing:
 
 ```bash
 ./gradlew --no-daemon spotlessApply   # reformat code and imports (Palantir style)
-./gradlew --no-daemon test
+./gradlew --no-daemon build
 ```
 
 Do not commit if any tests fail. Run `spotlessApply` before `test` so that

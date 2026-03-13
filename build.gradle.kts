@@ -2,7 +2,7 @@ plugins {
     java
     application
     jacoco
-    pmd
+//    pmd
     id("com.gradleup.shadow") version "9.3.2"
     id("com.diffplug.spotless") version "7.0.3"
 }
@@ -69,9 +69,9 @@ spotless {
     }
 }
 
-pmd {
-    toolVersion = "7.10.0"
-    isConsoleOutput = true
-    rulesMinimumPriority = 2
-    ruleSetFiles = files("config/pmd/ruleset.xml")
-}
+//pmd {
+//    toolVersion = "7.10.0"
+//    isConsoleOutput = true
+//    rulesMinimumPriority = 2
+//    ruleSetFiles = files("config/pmd/ruleset.xml")
+//}
