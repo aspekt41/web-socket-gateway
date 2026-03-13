@@ -4,7 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 
 import net.aspekt.gateway.websocket.WebSocketEndpoint;
 import net.aspekt.gateway.websocket.WebSocketServer;
-import net.aspekt.gateway.websocket.WebSocketServerConfig;
+import net.aspekt.gateway.websocket.XmlWebSocketServerConfig;
 import org.junit.jupiter.api.Test;
 
 /**
@@ -22,7 +22,7 @@ class WebSocketServerTest {
         // WebSocketServerConfig has all-defaults constructor; port=0 is fine for stop() tests
         // because stop() never uses the config — only the endpoint label for logging.
         WebSocketEndpoint endpoint = new WebSocketEndpoint("ws-test");
-        return new WebSocketServer(new WebSocketServerConfig(), endpoint);
+        return new WebSocketServer(new XmlWebSocketServerConfig(), endpoint);
     }
 
     // -----------------------------------------------------------------------

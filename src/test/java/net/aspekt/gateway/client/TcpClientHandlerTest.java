@@ -10,9 +10,9 @@ import io.netty.channel.embedded.EmbeddedChannel;
 import io.netty.handler.codec.http.websocketx.BinaryWebSocketFrame;
 import java.lang.reflect.Field;
 import net.aspekt.gateway.tcp.client.TcpClient;
-import net.aspekt.gateway.tcp.client.TcpClientConfig;
 import net.aspekt.gateway.tcp.client.TcpClientEndpoint;
 import net.aspekt.gateway.tcp.client.TcpClientHandler;
+import net.aspekt.gateway.tcp.client.XmlTcpClientConfig;
 import net.aspekt.gateway.websocket.WebSocketEndpoint;
 import org.junit.jupiter.api.Test;
 
@@ -43,8 +43,8 @@ class TcpClientHandlerTest {
     }
 
     /** Creates a TcpClientConfig with valid-enough values for testing. */
-    private static TcpClientConfig minimalConfig() throws Exception {
-        TcpClientConfig cfg = new TcpClientConfig();
+    private static XmlTcpClientConfig minimalConfig() throws Exception {
+        XmlTcpClientConfig cfg = new XmlTcpClientConfig();
         setField(cfg, "host", "localhost");
         setField(cfg, "port", 9090);
         return cfg;

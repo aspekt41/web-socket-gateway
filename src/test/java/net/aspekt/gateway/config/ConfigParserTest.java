@@ -7,10 +7,7 @@ import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
-import net.aspekt.gateway.ConfigException;
-import net.aspekt.gateway.ConfigParser;
-import net.aspekt.gateway.ForwardConfig;
-import net.aspekt.gateway.GatewayConfig;
+import net.aspekt.gateway.*;
 import net.aspekt.gateway.tcp.client.TcpClientConfig;
 import net.aspekt.gateway.tcp.hub.TcpHubConfig;
 import net.aspekt.gateway.tcp.server.TcpServerConfig;
@@ -41,11 +38,11 @@ class ConfigParserTest {
 
     @Test
     void parsesValidFullConfig() throws Exception {
-        GatewayConfig cfg = ConfigParser.parse(fixture("valid-full.xml"));
+        XmlGatewayConfig cfg = ConfigParser.parse(fixture("valid-full.xml"));
 
         List<WebSocketServerConfig> wsList = cfg.getWebSocketServers();
         assertEquals(1, wsList.size());
-        WebSocketServerConfig ws = wsList.get(0);
+        WebSocketServerConfig ws = wsList.getFirst();
         assertEquals("ws-one", ws.getLabel());
         assertEquals("127.0.0.1", ws.getBindAddress());
         assertEquals(9001, ws.getPort());
@@ -54,7 +51,7 @@ class ConfigParserTest {
 
         List<TcpClientConfig> tcpList = cfg.getTcpClients();
         assertEquals(1, tcpList.size());
-        TcpClientConfig tcp = tcpList.get(0);
+        TcpClientConfig tcp = tcpList.getFirst();
         assertEquals("tcp-one", tcp.getLabel());
         assertEquals("192.168.1.100", tcp.getHost());
         assertEquals(5000, tcp.getPort());

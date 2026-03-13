@@ -8,6 +8,8 @@ import io.netty.channel.socket.nio.NioSocketChannel;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.logging.Logger;
+import net.aspekt.gateway.ConnectionEndpoint;
+import net.aspekt.gateway.GatewayConnection;
 
 /**
  * Netty-based outbound TCP client.
@@ -26,7 +28,7 @@ import java.util.logging.Logger;
  * Call {@link #stop()} (or close via try-with-resources) to disconnect and
  * release resources.
  */
-public class TcpClient implements AutoCloseable {
+public class TcpClient implements GatewayConnection {
 
     private static final Logger log = Logger.getLogger(TcpClient.class.getName());
 
@@ -41,6 +43,10 @@ public class TcpClient implements AutoCloseable {
     public TcpClient(TcpClientConfig config, TcpClientEndpoint endpoint) {
         this.config = config;
         this.endpoint = endpoint;
+    }
+
+    public ConnectionEndpoint getEndpoint() {
+        return endpoint;
     }
 
     /**
@@ -76,11 +82,6 @@ public class TcpClient implements AutoCloseable {
                 eventLoopGroup.shutdownGracefully();
             }
         }
-    }
-
-    @Override
-    public void close() {
-        stop();
     }
 
     /** Returns the delay (in seconds) between reconnection attempts. */

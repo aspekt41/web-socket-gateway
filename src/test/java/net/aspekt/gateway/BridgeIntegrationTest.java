@@ -32,7 +32,7 @@ import org.junit.jupiter.api.Timeout;
  * <p>The test wires up the full stack:
  * <ol>
  *   <li>A real {@link ServerSocket} acting as the remote TCP service.
- *   <li>A {@link GatewayConfig} parsed from a dynamically-generated XML config.
+ *   <li>A {@link XmlGatewayConfig} parsed from a dynamically-generated XML config.
  *   <li>A real {@link WebSocketServer} and {@link TcpClient} constructed from
  *       that config with explicit {@link WebSocketEndpoint} / {@link TcpClientEndpoint}
  *       and bidirectional {@code <forward>} rules.
@@ -78,7 +78,7 @@ class BridgeIntegrationTest {
             // 2.  Parse a gateway config and wire endpoints + forward rules.
             // ------------------------------------------------------------
             File configFile = writeTempConfig(wsPort, tcpPort);
-            GatewayConfig config = ConfigParser.parse(configFile);
+            XmlGatewayConfig config = ConfigParser.parse(configFile);
 
             WebSocketServerConfig wsCfg = config.getWebSocketServers().get(0);
             TcpClientConfig tcpCfg = config.getTcpClients().get(0);

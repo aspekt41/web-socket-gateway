@@ -13,6 +13,8 @@ import io.netty.handler.logging.LogLevel;
 import io.netty.handler.logging.LoggingHandler;
 import java.net.InetSocketAddress;
 import java.util.logging.Logger;
+import net.aspekt.gateway.ConnectionEndpoint;
+import net.aspekt.gateway.GatewayConnection;
 
 /**
  * Netty-based WebSocket server.
@@ -29,7 +31,7 @@ import java.util.logging.Logger;
  * <p>Call {@link #start()} to bind and begin accepting connections.
  * Call {@link #stop()} (or close via try-with-resources) to shut down.
  */
-public class WebSocketServer implements AutoCloseable {
+public class WebSocketServer implements GatewayConnection {
 
     private static final Logger log = Logger.getLogger(WebSocketServer.class.getName());
 
@@ -46,6 +48,10 @@ public class WebSocketServer implements AutoCloseable {
     public WebSocketServer(WebSocketServerConfig config, WebSocketEndpoint endpoint) {
         this.config = config;
         this.endpoint = endpoint;
+    }
+
+    public ConnectionEndpoint getEndpoint() {
+        return endpoint;
     }
 
     /**

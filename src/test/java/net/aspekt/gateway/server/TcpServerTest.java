@@ -3,8 +3,8 @@ package net.aspekt.gateway.server;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 
 import net.aspekt.gateway.tcp.server.TcpServer;
-import net.aspekt.gateway.tcp.server.TcpServerConfig;
 import net.aspekt.gateway.tcp.server.TcpServerEndpoint;
+import net.aspekt.gateway.tcp.server.XmlTcpServerConfig;
 import org.junit.jupiter.api.Test;
 
 /**
@@ -20,7 +20,7 @@ class TcpServerTest {
 
     private static TcpServer unstartedServer() {
         TcpServerEndpoint endpoint = new TcpServerEndpoint("tcp-srv-test");
-        return new TcpServer(new TcpServerConfig(), endpoint);
+        return new TcpServer(new XmlTcpServerConfig(), endpoint);
     }
 
     @Test

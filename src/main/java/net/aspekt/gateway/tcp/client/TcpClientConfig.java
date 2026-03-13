@@ -1,58 +1,17 @@
 package net.aspekt.gateway.tcp.client;
 
-import jakarta.xml.bind.annotation.XmlAccessType;
-import jakarta.xml.bind.annotation.XmlAccessorType;
-import jakarta.xml.bind.annotation.XmlAttribute;
-
-/**
- * JAXB model for {@code <tcp-client>}.
- *
- * <p>Configures the outbound Netty TCP client connection.
+/***
+ * <p>Defines a configuration for an outbound TCP client connection.
  */
-@XmlAccessorType(XmlAccessType.FIELD)
-public class TcpClientConfig {
+public interface TcpClientConfig {
 
-    @XmlAttribute(name = "label", required = true)
-    private String label;
+    String getLabel();
 
-    @XmlAttribute(name = "host", required = true)
-    private String host;
+    String getHost();
 
-    @XmlAttribute(name = "port", required = true)
-    private int port;
+    int getPort();
 
-    @XmlAttribute(name = "reconnect-delay-seconds")
-    private int reconnectDelaySeconds = 5;
+    int getReconnectDelaySeconds();
 
-    @XmlAttribute(name = "connect-timeout-seconds")
-    private int connectTimeoutSeconds = 10;
-
-    public String getLabel() {
-        return label;
-    }
-
-    public String getHost() {
-        return host;
-    }
-
-    public int getPort() {
-        return port;
-    }
-
-    public int getReconnectDelaySeconds() {
-        return reconnectDelaySeconds;
-    }
-
-    public int getConnectTimeoutSeconds() {
-        return connectTimeoutSeconds;
-    }
-
-    @Override
-    public String toString() {
-        return "TcpClientConfig{label='" + label
-                + "', host='" + host
-                + "', port=" + port
-                + ", reconnectDelaySeconds=" + reconnectDelaySeconds
-                + ", connectTimeoutSeconds=" + connectTimeoutSeconds + "}";
-    }
+    int getConnectTimeoutSeconds();
 }

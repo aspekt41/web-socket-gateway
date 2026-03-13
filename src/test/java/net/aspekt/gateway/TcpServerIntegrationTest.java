@@ -9,11 +9,11 @@ import java.lang.reflect.Field;
 import java.net.ServerSocket;
 import java.net.Socket;
 import net.aspekt.gateway.tcp.client.TcpClient;
-import net.aspekt.gateway.tcp.client.TcpClientConfig;
 import net.aspekt.gateway.tcp.client.TcpClientEndpoint;
+import net.aspekt.gateway.tcp.client.XmlTcpClientConfig;
 import net.aspekt.gateway.tcp.server.TcpServer;
-import net.aspekt.gateway.tcp.server.TcpServerConfig;
 import net.aspekt.gateway.tcp.server.TcpServerEndpoint;
+import net.aspekt.gateway.tcp.server.XmlTcpServerConfig;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.Timeout;
 
@@ -43,8 +43,8 @@ class TcpServerIntegrationTest {
         TcpClient tcpClient = null;
 
         try {
-            TcpServerConfig srvCfg = buildTcpServerConfig("gw-server", tcpServerPort);
-            TcpClientConfig cliCfg = buildTcpClientConfig("gw-client", backendPort);
+            XmlTcpServerConfig srvCfg = buildTcpServerConfig("gw-server", tcpServerPort);
+            XmlTcpClientConfig cliCfg = buildTcpClientConfig("gw-client", backendPort);
 
             TcpServerEndpoint srvEp = new TcpServerEndpoint(srvCfg.getLabel());
             TcpClientEndpoint cliEp = new TcpClientEndpoint(cliCfg.getLabel());
@@ -98,16 +98,16 @@ class TcpServerIntegrationTest {
     // Config builders (using reflection since POJOs have no public arg constructors)
     // -----------------------------------------------------------------------
 
-    private static TcpServerConfig buildTcpServerConfig(String label, int port) throws Exception {
-        TcpServerConfig cfg = new TcpServerConfig();
+    private static XmlTcpServerConfig buildTcpServerConfig(String label, int port) throws Exception {
+        XmlTcpServerConfig cfg = new XmlTcpServerConfig();
         setField(cfg, "label", label);
         setField(cfg, "bindAddress", "127.0.0.1");
         setField(cfg, "port", port);
         return cfg;
     }
 
-    private static TcpClientConfig buildTcpClientConfig(String label, int port) throws Exception {
-        TcpClientConfig cfg = new TcpClientConfig();
+    private static XmlTcpClientConfig buildTcpClientConfig(String label, int port) throws Exception {
+        XmlTcpClientConfig cfg = new XmlTcpClientConfig();
         setField(cfg, "label", label);
         setField(cfg, "host", "127.0.0.1");
         setField(cfg, "port", port);

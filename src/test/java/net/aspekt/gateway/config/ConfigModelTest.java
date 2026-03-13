@@ -5,10 +5,10 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.lang.reflect.Field;
 import net.aspekt.gateway.ConfigParser;
-import net.aspekt.gateway.ForwardConfig;
-import net.aspekt.gateway.GatewayConfig;
-import net.aspekt.gateway.tcp.client.TcpClientConfig;
-import net.aspekt.gateway.websocket.WebSocketServerConfig;
+import net.aspekt.gateway.XmlForwardConfig;
+import net.aspekt.gateway.XmlGatewayConfig;
+import net.aspekt.gateway.tcp.client.XmlTcpClientConfig;
+import net.aspekt.gateway.websocket.XmlWebSocketServerConfig;
 import org.junit.jupiter.api.Test;
 
 /**
@@ -32,7 +32,7 @@ class ConfigModelTest {
 
     @Test
     void forwardConfigToStringContainsFromAndTo() throws Exception {
-        ForwardConfig fwd = new ForwardConfig();
+        XmlForwardConfig fwd = new XmlForwardConfig();
         set(fwd, "from", "ws-in");
         set(fwd, "to", "tcp-out");
 
@@ -43,7 +43,7 @@ class ConfigModelTest {
 
     @Test
     void forwardConfigGettersReturnSetValues() throws Exception {
-        ForwardConfig fwd = new ForwardConfig();
+        XmlForwardConfig fwd = new XmlForwardConfig();
         set(fwd, "from", "source");
         set(fwd, "to", "sink");
 
@@ -57,7 +57,7 @@ class ConfigModelTest {
 
     @Test
     void tcpClientConfigToStringContainsKeyFields() throws Exception {
-        TcpClientConfig cfg = new TcpClientConfig();
+        XmlTcpClientConfig cfg = new XmlTcpClientConfig();
         set(cfg, "label", "my-tcp");
         set(cfg, "host", "10.0.0.1");
         set(cfg, "port", 4321);
@@ -78,7 +78,7 @@ class ConfigModelTest {
 
     @Test
     void webSocketServerConfigToStringContainsKeyFields() throws Exception {
-        WebSocketServerConfig cfg = new WebSocketServerConfig();
+        XmlWebSocketServerConfig cfg = new XmlWebSocketServerConfig();
         set(cfg, "label", "my-ws");
         set(cfg, "bindAddress", "127.0.0.1");
         set(cfg, "port", 8080);
@@ -100,7 +100,7 @@ class ConfigModelTest {
     @Test
     void gatewayConfigToStringMentionsAllSections() throws Exception {
         // Parse a real fixture so the list is populated via JAXB
-        GatewayConfig cfg = ConfigParser.parse(new java.io.File(
+        XmlGatewayConfig cfg = ConfigParser.parse(new java.io.File(
                 ConfigModelTest.class.getResource("/config/valid-full.xml").toURI()));
 
         String s = cfg.toString();
@@ -114,7 +114,7 @@ class ConfigModelTest {
 
     @Test
     void emptyGatewayConfigToStringContainsEmptyLists() {
-        GatewayConfig cfg = new GatewayConfig();
+        XmlGatewayConfig cfg = new XmlGatewayConfig();
         String s = cfg.toString();
         assertTrue(s.contains("webSocketServers=[]"));
         assertTrue(s.contains("tcpClients=[]"));

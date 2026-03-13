@@ -30,6 +30,11 @@ public abstract class AbstractConnectionEndpoint implements ConnectionEndpoint {
     }
 
     @Override
+    public void removeTarget(ConnectionEndpoint target) {
+        targets.remove(target);
+    }
+
+    @Override
     public List<ConnectionEndpoint> getTargets() {
         return targets;
     }

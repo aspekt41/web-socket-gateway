@@ -1,27 +1,14 @@
 package net.aspekt.gateway;
 
 import java.io.File;
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import net.aspekt.gateway.tcp.client.TcpClient;
-import net.aspekt.gateway.tcp.client.TcpClientConfig;
-import net.aspekt.gateway.tcp.client.TcpClientEndpoint;
 import net.aspekt.gateway.tcp.hub.TcpHub;
-import net.aspekt.gateway.tcp.hub.TcpHubConfig;
-import net.aspekt.gateway.tcp.hub.TcpHubEndpoint;
 import net.aspekt.gateway.tcp.server.TcpServer;
-import net.aspekt.gateway.tcp.server.TcpServerConfig;
-import net.aspekt.gateway.tcp.server.TcpServerEndpoint;
 import net.aspekt.gateway.udp.multicast.UdpMulticast;
-import net.aspekt.gateway.udp.multicast.UdpMulticastConfig;
-import net.aspekt.gateway.udp.multicast.UdpMulticastEndpoint;
-import net.aspekt.gateway.websocket.WebSocketEndpoint;
 import net.aspekt.gateway.websocket.WebSocketServer;
-import net.aspekt.gateway.websocket.WebSocketServerConfig;
 
 /**
  * Application entry point.
@@ -34,10 +21,8 @@ import net.aspekt.gateway.websocket.WebSocketServerConfig;
  * <p>Startup sequence:
  * <ol>
  *   <li>Parse and validate the XML configuration file.
- *   <li>Create a labeled {@link ConnectionEndpoint} for every
- *       {@code <websocket-server>}, {@code <tcp-server>}, and {@code <tcp-client>}
- *       declaration.
- *   <li>Wire unidirectional forwarding rules from the {@code <forward>} elements.
+ *   <li>Build the {@link GatewayModel} via {@link GatewayModelBuilder}, which creates a labeled
+ *       {@link ConnectionEndpoint} for every endpoint declaration and wires all forwarding rules.
  *   <li>Start all servers and clients.
  * </ol>
  *
@@ -61,7 +46,7 @@ public class Main {
             System.exit(1);
         }
 
-        GatewayConfig config;
+        XmlGatewayConfig config;
         try {
             config = ConfigParser.parse(configFile);
         } catch (ConfigException e) {
@@ -71,88 +56,28 @@ public class Main {
         }
 
         // ----------------------------------------------------------------
-        // 1. Create endpoints and register them by label
+        // 1. Build the gateway model (endpoints + forwarding rules)
         // ----------------------------------------------------------------
-        Map<String, ConnectionEndpoint> registry = new LinkedHashMap<>();
-        List<WebSocketServer> wsServers = new ArrayList<>();
-        List<TcpServer> tcpServers = new ArrayList<>();
-        List<TcpHub> tcpHubs = new ArrayList<>();
-        List<TcpClient> tcpClients = new ArrayList<>();
-        List<UdpMulticast> udpMulticasts = new ArrayList<>();
-
-        for (WebSocketServerConfig wsCfg : config.getWebSocketServers()) {
-            if (registry.containsKey(wsCfg.getLabel())) {
-                log.severe("Duplicate label: " + wsCfg.getLabel());
-                System.exit(1);
-            }
-            WebSocketEndpoint ep = new WebSocketEndpoint(wsCfg.getLabel());
-            registry.put(wsCfg.getLabel(), ep);
-            wsServers.add(new WebSocketServer(wsCfg, ep));
+        GatewayModelBuilder builder = new GatewayModelBuilder(config);
+        GatewayModel model;
+        try {
+            model = builder.build();
+        } catch (ConfigException e) {
+            log.log(Level.SEVERE, "Failed to build gateway model: " + e.getMessage(), e);
+            System.exit(1);
+            return;
         }
 
-        for (TcpServerConfig tcpSrvCfg : config.getTcpServers()) {
-            if (registry.containsKey(tcpSrvCfg.getLabel())) {
-                log.severe("Duplicate label: " + tcpSrvCfg.getLabel());
-                System.exit(1);
-            }
-            TcpServerEndpoint ep = new TcpServerEndpoint(tcpSrvCfg.getLabel());
-            registry.put(tcpSrvCfg.getLabel(), ep);
-            tcpServers.add(new TcpServer(tcpSrvCfg, ep));
-        }
-
-        for (TcpHubConfig tcpHubCfg : config.getTcpHubs()) {
-            if (registry.containsKey(tcpHubCfg.getLabel())) {
-                log.severe("Duplicate label: " + tcpHubCfg.getLabel());
-                System.exit(1);
-            }
-            TcpHubEndpoint ep = new TcpHubEndpoint(tcpHubCfg.getLabel());
-            registry.put(tcpHubCfg.getLabel(), ep);
-            tcpHubs.add(new TcpHub(tcpHubCfg, ep));
-        }
-
-        for (TcpClientConfig tcpCfg : config.getTcpClients()) {
-            if (registry.containsKey(tcpCfg.getLabel())) {
-                log.severe("Duplicate label: " + tcpCfg.getLabel());
-                System.exit(1);
-            }
-            TcpClientEndpoint ep = new TcpClientEndpoint(tcpCfg.getLabel());
-            registry.put(tcpCfg.getLabel(), ep);
-            tcpClients.add(new TcpClient(tcpCfg, ep));
-        }
-
-        for (UdpMulticastConfig umCfg : config.getUdpMulticasts()) {
-            if (registry.containsKey(umCfg.getLabel())) {
-                log.severe("Duplicate label: " + umCfg.getLabel());
-                System.exit(1);
-            }
-            UdpMulticastEndpoint ep = new UdpMulticastEndpoint(
-                    umCfg.getLabel(), new java.net.InetSocketAddress(umCfg.getGroup(), umCfg.getPort()));
-            registry.put(umCfg.getLabel(), ep);
-            udpMulticasts.add(new UdpMulticast(umCfg, ep));
-        }
+        List<WebSocketServer> wsServers = builder.getWsServers();
+        List<TcpServer> tcpServers = builder.getTcpServers();
+        List<TcpHub> tcpHubs = builder.getTcpHubs();
+        List<TcpClient> tcpClients = builder.getTcpClients();
+        List<UdpMulticast> udpMulticasts = builder.getUdpMulticasts();
 
         // ----------------------------------------------------------------
-        // 2. Wire forwarding rules
+        // 2. Start all components
         // ----------------------------------------------------------------
-        for (ForwardConfig fwd : config.getForwards()) {
-            ConnectionEndpoint from = registry.get(fwd.getFrom());
-            if (from == null) {
-                log.severe("Forward rule references unknown label '" + fwd.getFrom() + "'");
-                System.exit(1);
-            }
-            ConnectionEndpoint to = registry.get(fwd.getTo());
-            if (to == null) {
-                log.severe("Forward rule references unknown label '" + fwd.getTo() + "'");
-                System.exit(1);
-            }
-            from.addTarget(to);
-            log.info("Wired forward: " + fwd.getFrom() + " → " + fwd.getTo());
-        }
-
-        // ----------------------------------------------------------------
-        // 3. Start all components
-        // ----------------------------------------------------------------
-        if (registry.isEmpty()) {
+        if (model.getEndpoints().isEmpty()) {
             log.warning("No connection entries found in config — exiting.");
             System.exit(0);
         }

@@ -55,6 +55,9 @@ package "web-socket-gateway (net.aspekt.gateway)" {
     component "ConfigParser" as ConfigParser
     component "GatewayConfig\n(JAXB root)" as GatewayConfig
     component "XSD Schema\n(gateway-config.xsd)" as XSD
+    component "GatewayModelBuilder" as GMBuilder
+    component "GatewayModel\n(endpoint registry\n+ forward rules)" as GModel
+    component "ForwardRule\n(value record)" as FRule
   }
 
   ' ── Endpoint abstraction ──────────────────
@@ -62,6 +65,7 @@ package "web-socket-gateway (net.aspekt.gateway)" {
     interface "ConnectionEndpoint" as CE {
       +send(ByteBuf)
       +addTarget(ConnectionEndpoint)
+      +removeTarget(ConnectionEndpoint)
       +onDataReceived(ByteBuf)
     }
     component "AbstractConnectionEndpoint\n(fan-out, CopyOnWriteArrayList)" as ACE
@@ -116,12 +120,12 @@ ACE <|-- UDPEndpoint
 Main --> ConfigParser : parse & validate
 ConfigParser --> XSD : validates against
 ConfigParser --> GatewayConfig : produces
-Main --> GatewayConfig : reads endpoints\n& forward rules
-Main --> WSEndpoint : create & wire
-Main --> TCPSrvEndpoint : create & wire
-Main --> TCPCliEndpoint : create & wire
-Main --> TCPHubEndpoint : create & wire
-Main --> UDPEndpoint : create & wire
+Main --> GMBuilder : create & build
+GMBuilder --> GatewayConfig : reads endpoints\n& forward rules
+GMBuilder --> GModel : populates
+GModel --> FRule : contains
+GModel --> CE : registers endpoints\n& wires targets
+Main --> GModel : checks isEmpty()
 
 ' ─────────────────────────────────────────────
 ' Server → Handler → Endpoint chains

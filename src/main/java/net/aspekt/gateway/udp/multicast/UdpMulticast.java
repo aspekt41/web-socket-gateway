@@ -7,10 +7,10 @@ import io.netty.channel.ChannelOption;
 import io.netty.channel.EventLoopGroup;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.nio.NioDatagramChannel;
-import java.net.InetAddress;
-import java.net.InetSocketAddress;
-import java.net.NetworkInterface;
+import java.net.*;
 import java.util.logging.Logger;
+import net.aspekt.gateway.ConnectionEndpoint;
+import net.aspekt.gateway.GatewayConnection;
 
 /**
  * Netty-based UDP multicast endpoint.
@@ -28,7 +28,7 @@ import java.util.logging.Logger;
  * Call {@link #stop()} (or close via try-with-resources) to leave the group and
  * release resources.
  */
-public class UdpMulticast implements AutoCloseable {
+public class UdpMulticast implements GatewayConnection {
 
     private static final Logger log = Logger.getLogger(UdpMulticast.class.getName());
 
@@ -43,6 +43,10 @@ public class UdpMulticast implements AutoCloseable {
         this.endpoint = endpoint;
     }
 
+    public ConnectionEndpoint getEndpoint() {
+        return endpoint;
+    }
+
     /**
      * Binds the datagram channel and joins the multicast group.
      * Returns as soon as the socket is bound and the group is joined.
@@ -51,7 +55,7 @@ public class UdpMulticast implements AutoCloseable {
      * @throws Exception            if the network interface name is invalid or
      *                              the multicast group address cannot be resolved
      */
-    public void start() throws Exception {
+    public void start() throws SocketException, InterruptedException, UnknownHostException {
         group = new NioEventLoopGroup();
 
         Bootstrap bootstrap = new Bootstrap()
@@ -119,7 +123,7 @@ public class UdpMulticast implements AutoCloseable {
     // Internal
     // ------------------------------------------------------------------
 
-    private NetworkInterface resolveNetworkInterface() throws Exception {
+    private NetworkInterface resolveNetworkInterface() throws SocketException {
         String niName = config.getNetworkInterface();
         if (niName == null) {
             return null;

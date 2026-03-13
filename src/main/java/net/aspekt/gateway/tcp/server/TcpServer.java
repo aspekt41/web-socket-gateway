@@ -9,6 +9,8 @@ import io.netty.handler.logging.LogLevel;
 import io.netty.handler.logging.LoggingHandler;
 import java.net.InetSocketAddress;
 import java.util.logging.Logger;
+import net.aspekt.gateway.ConnectionEndpoint;
+import net.aspekt.gateway.GatewayConnection;
 
 /**
  * Netty-based raw TCP server.
@@ -21,7 +23,7 @@ import java.util.logging.Logger;
  * <p>Call {@link #start()} to bind and begin accepting connections.
  * Call {@link #stop()} (or close via try-with-resources) to shut down.
  */
-public class TcpServer implements AutoCloseable {
+public class TcpServer implements GatewayConnection {
 
     private static final Logger log = Logger.getLogger(TcpServer.class.getName());
 
@@ -35,6 +37,10 @@ public class TcpServer implements AutoCloseable {
     public TcpServer(TcpServerConfig config, TcpServerEndpoint endpoint) {
         this.config = config;
         this.endpoint = endpoint;
+    }
+
+    public ConnectionEndpoint getEndpoint() {
+        return endpoint;
     }
 
     /**

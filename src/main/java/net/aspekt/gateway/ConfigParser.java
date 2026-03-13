@@ -13,7 +13,7 @@ import javax.xml.validation.SchemaFactory;
 import org.xml.sax.SAXException;
 
 /**
- * Parses a gateway configuration XML file into a {@link GatewayConfig} model.
+ * Parses a gateway configuration XML file into a {@link XmlGatewayConfig} model.
  *
  * <p>The file is validated against the bundled XSD schema
  * ({@code gateway-config.xsd}) before unmarshalling, so invalid config
@@ -35,11 +35,11 @@ public final class ConfigParser {
      * Parse and validate a gateway configuration file.
      *
      * @param configFile path to the XML configuration file
-     * @return populated {@link GatewayConfig}
+     * @return populated {@link XmlGatewayConfig}
      * @throws ConfigException if the file cannot be read, fails schema
      *                         validation, or cannot be unmarshalled
      */
-    public static GatewayConfig parse(File configFile) throws ConfigException {
+    public static XmlGatewayConfig parse(File configFile) throws ConfigException {
         log.log(Level.INFO, "Loading gateway config from: {0}", configFile.getAbsolutePath());
 
         Schema schema = loadSchema();
@@ -48,7 +48,7 @@ public final class ConfigParser {
         try {
             Unmarshaller um = ctx.createUnmarshaller();
             um.setSchema(schema); // validation happens during unmarshal
-            GatewayConfig config = (GatewayConfig) um.unmarshal(configFile);
+            XmlGatewayConfig config = (XmlGatewayConfig) um.unmarshal(configFile);
             log.log(
                     Level.INFO,
                     "Loaded {0} websocket-server(s), {1} tcp-server(s), {2} tcp-hub(s),"
@@ -88,9 +88,9 @@ public final class ConfigParser {
     }
 
     private static JAXBContext createJaxbContext() throws ConfigException {
-        log.log(Level.FINE, "Creating JAXB context for {0}", GatewayConfig.class.getName());
+        log.log(Level.FINE, "Creating JAXB context for {0}", XmlGatewayConfig.class.getName());
         try {
-            JAXBContext ctx = JAXBContext.newInstance(GatewayConfig.class);
+            JAXBContext ctx = JAXBContext.newInstance(XmlGatewayConfig.class);
             log.log(Level.FINE, "JAXB context created successfully");
             return ctx;
         } catch (JAXBException e) {
