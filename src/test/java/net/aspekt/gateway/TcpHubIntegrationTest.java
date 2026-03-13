@@ -1,5 +1,13 @@
 package net.aspekt.gateway;
 
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
+
+import java.io.EOFException;
+import java.io.IOException;
+import java.io.InputStream;
+import java.lang.reflect.Field;
+import java.net.ServerSocket;
+import java.net.Socket;
 import net.aspekt.gateway.tcp.client.TcpClient;
 import net.aspekt.gateway.tcp.client.TcpClientEndpoint;
 import net.aspekt.gateway.tcp.client.XmlTcpClientConfig;
@@ -8,15 +16,6 @@ import net.aspekt.gateway.tcp.hub.TcpHubEndpoint;
 import net.aspekt.gateway.tcp.hub.XmlTcpHubConfig;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.Timeout;
-
-import java.io.EOFException;
-import java.io.IOException;
-import java.io.InputStream;
-import java.lang.reflect.Field;
-import java.net.ServerSocket;
-import java.net.Socket;
-
-import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 
 /**
  * End-to-end integration tests for the TCP hub.

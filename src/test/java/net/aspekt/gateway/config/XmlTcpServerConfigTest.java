@@ -1,12 +1,11 @@
 package net.aspekt.gateway.config;
 
-import net.aspekt.gateway.tcp.server.XmlTcpServerConfig;
-import org.junit.jupiter.api.Test;
-
-import java.lang.reflect.Field;
-
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+
+import java.lang.reflect.Field;
+import net.aspekt.gateway.tcp.server.XmlTcpServerConfig;
+import org.junit.jupiter.api.Test;
 
 /**
  * Unit tests for {@link XmlTcpServerConfig}.

@@ -11,11 +11,10 @@ import io.netty.handler.codec.http.websocketx.WebSocketServerProtocolHandler;
 import io.netty.handler.codec.http.websocketx.extensions.compression.WebSocketServerCompressionHandler;
 import io.netty.handler.logging.LogLevel;
 import io.netty.handler.logging.LoggingHandler;
-import net.aspekt.gateway.ConnectionEndpoint;
-import net.aspekt.gateway.GatewayConnection;
-
 import java.net.InetSocketAddress;
 import java.util.logging.Logger;
+import net.aspekt.gateway.ConnectionEndpoint;
+import net.aspekt.gateway.GatewayConnection;
 
 /**
  * Netty-based WebSocket server.

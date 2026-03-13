@@ -1,5 +1,8 @@
 package net.aspekt.gateway;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.logging.Logger;
 import net.aspekt.gateway.tcp.client.TcpClient;
 import net.aspekt.gateway.tcp.client.TcpClientConfig;
 import net.aspekt.gateway.tcp.client.TcpClientEndpoint;
@@ -15,10 +18,6 @@ import net.aspekt.gateway.udp.multicast.UdpMulticastEndpoint;
 import net.aspekt.gateway.websocket.WebSocketEndpoint;
 import net.aspekt.gateway.websocket.WebSocketServer;
 import net.aspekt.gateway.websocket.WebSocketServerConfig;
-
-import java.util.ArrayList;
-import java.util.List;
-import java.util.logging.Logger;
 
 /**
  * Translates a {@link XmlGatewayConfig} into a populated {@link GatewayModel} and

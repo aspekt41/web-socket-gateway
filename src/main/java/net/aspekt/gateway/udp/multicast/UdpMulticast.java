@@ -7,11 +7,10 @@ import io.netty.channel.ChannelOption;
 import io.netty.channel.EventLoopGroup;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.nio.NioDatagramChannel;
-import net.aspekt.gateway.ConnectionEndpoint;
-import net.aspekt.gateway.GatewayConnection;
-
 import java.net.*;
 import java.util.logging.Logger;
+import net.aspekt.gateway.ConnectionEndpoint;
+import net.aspekt.gateway.GatewayConnection;
 
 /**
  * Netty-based UDP multicast endpoint.

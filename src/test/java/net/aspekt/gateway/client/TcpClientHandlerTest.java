@@ -1,21 +1,20 @@
 package net.aspekt.gateway.client;
 
+import static org.junit.jupiter.api.Assertions.*;
+
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import io.netty.channel.DefaultChannelId;
 import io.netty.channel.EventLoop;
 import io.netty.channel.embedded.EmbeddedChannel;
 import io.netty.handler.codec.http.websocketx.BinaryWebSocketFrame;
+import java.lang.reflect.Field;
 import net.aspekt.gateway.tcp.client.TcpClient;
 import net.aspekt.gateway.tcp.client.TcpClientEndpoint;
 import net.aspekt.gateway.tcp.client.TcpClientHandler;
 import net.aspekt.gateway.tcp.client.XmlTcpClientConfig;
 import net.aspekt.gateway.websocket.WebSocketEndpoint;
 import org.junit.jupiter.api.Test;
-
-import java.lang.reflect.Field;
-
-import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * Unit tests for TcpClientHandler using EmbeddedChannel for synchronous I/O.

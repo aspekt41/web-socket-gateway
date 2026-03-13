@@ -1,6 +1,9 @@
 package net.aspekt.gateway;
 
 import jakarta.xml.bind.annotation.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.stream.Collectors;
 import net.aspekt.gateway.tcp.client.TcpClientConfig;
 import net.aspekt.gateway.tcp.client.XmlTcpClientConfig;
 import net.aspekt.gateway.tcp.hub.TcpHubConfig;
@@ -11,10 +14,6 @@ import net.aspekt.gateway.udp.multicast.UdpMulticastConfig;
 import net.aspekt.gateway.udp.multicast.XmlUdpMulticastConfig;
 import net.aspekt.gateway.websocket.WebSocketServerConfig;
 import net.aspekt.gateway.websocket.XmlWebSocketServerConfig;
-
-import java.util.ArrayList;
-import java.util.List;
-import java.util.stream.Collectors;
 
 /**
  * Root JAXB model for {@code <gateway-config>}.
@@ -30,12 +29,12 @@ public class XmlGatewayConfig implements GatewayConfig {
     public static final String NAMESPACE = "http://github.com/web-socket-gateway/config/v1";
 
     @XmlElements({
-            @XmlElement(name = "websocket-server", type = XmlWebSocketServerConfig.class, namespace = NAMESPACE),
-            @XmlElement(name = "tcp-client", type = XmlTcpClientConfig.class, namespace = NAMESPACE),
-            @XmlElement(name = "tcp-server", type = XmlTcpServerConfig.class, namespace = NAMESPACE),
-            @XmlElement(name = "tcp-hub", type = XmlTcpHubConfig.class, namespace = NAMESPACE),
-            @XmlElement(name = "udp-multicast", type = XmlUdpMulticastConfig.class, namespace = NAMESPACE),
-            @XmlElement(name = "forward", type = XmlForwardConfig.class, namespace = NAMESPACE)
+        @XmlElement(name = "websocket-server", type = XmlWebSocketServerConfig.class, namespace = NAMESPACE),
+        @XmlElement(name = "tcp-client", type = XmlTcpClientConfig.class, namespace = NAMESPACE),
+        @XmlElement(name = "tcp-server", type = XmlTcpServerConfig.class, namespace = NAMESPACE),
+        @XmlElement(name = "tcp-hub", type = XmlTcpHubConfig.class, namespace = NAMESPACE),
+        @XmlElement(name = "udp-multicast", type = XmlUdpMulticastConfig.class, namespace = NAMESPACE),
+        @XmlElement(name = "forward", type = XmlForwardConfig.class, namespace = NAMESPACE)
     })
     private List<Object> elements = new ArrayList<>();
 

@@ -1,13 +1,7 @@
 package net.aspekt.gateway;
 
-import net.aspekt.gateway.tcp.client.TcpClient;
-import net.aspekt.gateway.tcp.client.TcpClientConfig;
-import net.aspekt.gateway.tcp.client.TcpClientEndpoint;
-import net.aspekt.gateway.websocket.WebSocketEndpoint;
-import net.aspekt.gateway.websocket.WebSocketServer;
-import net.aspekt.gateway.websocket.WebSocketServerConfig;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.Timeout;
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.EOFException;
 import java.io.File;
@@ -23,9 +17,14 @@ import java.nio.file.Files;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
-
-import static org.junit.jupiter.api.Assertions.assertArrayEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import net.aspekt.gateway.tcp.client.TcpClient;
+import net.aspekt.gateway.tcp.client.TcpClientConfig;
+import net.aspekt.gateway.tcp.client.TcpClientEndpoint;
+import net.aspekt.gateway.websocket.WebSocketEndpoint;
+import net.aspekt.gateway.websocket.WebSocketServer;
+import net.aspekt.gateway.websocket.WebSocketServerConfig;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.Timeout;
 
 /**
  * End-to-end integration test for the TCP↔WebSocket bridge.

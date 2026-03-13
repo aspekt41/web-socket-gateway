@@ -1,5 +1,12 @@
 package net.aspekt.gateway.config;
 
+import static org.junit.jupiter.api.Assertions.*;
+
+import java.io.File;
+import java.net.URL;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.List;
 import net.aspekt.gateway.*;
 import net.aspekt.gateway.tcp.client.TcpClientConfig;
 import net.aspekt.gateway.tcp.hub.TcpHubConfig;
@@ -8,14 +15,6 @@ import net.aspekt.gateway.udp.multicast.UdpMulticastConfig;
 import net.aspekt.gateway.websocket.WebSocketServerConfig;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
-
-import java.io.File;
-import java.net.URL;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.util.List;
-
-import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * Tests for ConfigParser: schema validation, JAXB unmarshalling, and default values.

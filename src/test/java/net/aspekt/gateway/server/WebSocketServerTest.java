@@ -1,11 +1,11 @@
 package net.aspekt.gateway.server;
 
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+
 import net.aspekt.gateway.websocket.WebSocketEndpoint;
 import net.aspekt.gateway.websocket.WebSocketServer;
 import net.aspekt.gateway.websocket.XmlWebSocketServerConfig;
 import org.junit.jupiter.api.Test;
-
-import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 
 /**
  * Unit tests for {@link WebSocketServer} lifecycle methods that do not require

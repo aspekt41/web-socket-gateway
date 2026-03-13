@@ -7,11 +7,10 @@ import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
 import io.netty.handler.logging.LogLevel;
 import io.netty.handler.logging.LoggingHandler;
-import net.aspekt.gateway.ConnectionEndpoint;
-import net.aspekt.gateway.GatewayConnection;
-
 import java.net.InetSocketAddress;
 import java.util.logging.Logger;
+import net.aspekt.gateway.ConnectionEndpoint;
+import net.aspekt.gateway.GatewayConnection;
 
 /**
  * Netty-based raw TCP server.

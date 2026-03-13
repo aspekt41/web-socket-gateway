@@ -5,12 +5,11 @@ import io.netty.channel.*;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioSocketChannel;
-import net.aspekt.gateway.ConnectionEndpoint;
-import net.aspekt.gateway.GatewayConnection;
-
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.logging.Logger;
+import net.aspekt.gateway.ConnectionEndpoint;
+import net.aspekt.gateway.GatewayConnection;
 
 /**
  * Netty-based outbound TCP client.

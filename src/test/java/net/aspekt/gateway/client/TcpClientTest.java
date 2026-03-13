@@ -1,14 +1,13 @@
 package net.aspekt.gateway.client;
 
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
+import java.lang.reflect.Field;
 import net.aspekt.gateway.tcp.client.TcpClient;
 import net.aspekt.gateway.tcp.client.TcpClientEndpoint;
 import net.aspekt.gateway.tcp.client.XmlTcpClientConfig;
 import org.junit.jupiter.api.Test;
-
-import java.lang.reflect.Field;
-
-import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
-import static org.junit.jupiter.api.Assertions.assertEquals;
 
 /**
  * Unit tests for {@link TcpClient} lifecycle methods that do not require a live

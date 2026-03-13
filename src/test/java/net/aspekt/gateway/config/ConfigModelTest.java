@@ -1,16 +1,15 @@
 package net.aspekt.gateway.config;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
+import java.lang.reflect.Field;
 import net.aspekt.gateway.ConfigParser;
 import net.aspekt.gateway.XmlForwardConfig;
 import net.aspekt.gateway.XmlGatewayConfig;
 import net.aspekt.gateway.tcp.client.XmlTcpClientConfig;
 import net.aspekt.gateway.websocket.XmlWebSocketServerConfig;
 import org.junit.jupiter.api.Test;
-
-import java.lang.reflect.Field;
-
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
  * Tests for the {@code toString()} methods and simple accessors of config model classes.
