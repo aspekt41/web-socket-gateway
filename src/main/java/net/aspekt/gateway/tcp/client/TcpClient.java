@@ -5,6 +5,7 @@ import io.netty.channel.*;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioSocketChannel;
+import net.aspekt.gateway.ConnectionEndpoint;
 import net.aspekt.gateway.GatewayConnection;
 
 import java.util.concurrent.TimeUnit;
@@ -45,6 +46,10 @@ public class TcpClient implements GatewayConnection {
         this.endpoint = endpoint;
     }
 
+    public ConnectionEndpoint getEndpoint() {
+        return endpoint;
+    }
+
     /**
      * Starts the TCP client and initiates the first connection attempt.
      * Returns immediately; connection is established asynchronously.
@@ -78,11 +83,6 @@ public class TcpClient implements GatewayConnection {
                 eventLoopGroup.shutdownGracefully();
             }
         }
-    }
-
-    @Override
-    public void close() {
-        stop();
     }
 
     /** Returns the delay (in seconds) between reconnection attempts. */

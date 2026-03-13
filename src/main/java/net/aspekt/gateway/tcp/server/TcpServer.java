@@ -7,6 +7,7 @@ import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
 import io.netty.handler.logging.LogLevel;
 import io.netty.handler.logging.LoggingHandler;
+import net.aspekt.gateway.ConnectionEndpoint;
 import net.aspekt.gateway.GatewayConnection;
 
 import java.net.InetSocketAddress;
@@ -37,6 +38,10 @@ public class TcpServer implements GatewayConnection {
     public TcpServer(TcpServerConfig config, TcpServerEndpoint endpoint) {
         this.config = config;
         this.endpoint = endpoint;
+    }
+
+    public ConnectionEndpoint getEndpoint() {
+        return endpoint;
     }
 
     /**

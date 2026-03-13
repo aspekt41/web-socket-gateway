@@ -11,6 +11,7 @@ import io.netty.handler.codec.http.websocketx.WebSocketServerProtocolHandler;
 import io.netty.handler.codec.http.websocketx.extensions.compression.WebSocketServerCompressionHandler;
 import io.netty.handler.logging.LogLevel;
 import io.netty.handler.logging.LoggingHandler;
+import net.aspekt.gateway.ConnectionEndpoint;
 import net.aspekt.gateway.GatewayConnection;
 
 import java.net.InetSocketAddress;
@@ -48,6 +49,10 @@ public class WebSocketServer implements GatewayConnection {
     public WebSocketServer(WebSocketServerConfig config, WebSocketEndpoint endpoint) {
         this.config = config;
         this.endpoint = endpoint;
+    }
+
+    public ConnectionEndpoint getEndpoint() {
+        return endpoint;
     }
 
     /**

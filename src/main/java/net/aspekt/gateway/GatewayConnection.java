@@ -11,4 +11,6 @@ public interface GatewayConnection extends AutoCloseable {
     default void close() {
         stop();
     }
+
+    ConnectionEndpoint getEndpoint();
 }
