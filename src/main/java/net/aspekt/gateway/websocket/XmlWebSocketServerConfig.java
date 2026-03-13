@@ -10,7 +10,7 @@ import jakarta.xml.bind.annotation.XmlAttribute;
  * <p>Configures the inbound Netty WebSocket server endpoint.
  */
 @XmlAccessorType(XmlAccessType.FIELD)
-public class XmlWebSocketServerConfig {
+public class XmlWebSocketServerConfig implements WebSocketServerConfig {
 
     @XmlAttribute(name = "label", required = true)
     private String label;

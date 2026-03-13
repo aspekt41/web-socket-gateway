@@ -11,7 +11,7 @@ import jakarta.xml.bind.annotation.XmlAttribute;
  * receive datagrams and sends outbound datagrams to that same group.
  */
 @XmlAccessorType(XmlAccessType.FIELD)
-public class XmlUdpMulticastConfig {
+public class XmlUdpMulticastConfig implements UdpMulticastConfig {
 
     @XmlAttribute(name = "label", required = true)
     private String label;

@@ -10,7 +10,7 @@ import jakarta.xml.bind.annotation.XmlAttribute;
  * <p>Configures the outbound Netty TCP client connection.
  */
 @XmlAccessorType(XmlAccessType.FIELD)
-public class XmlTcpClientConfig {
+public class XmlTcpClientConfig implements TcpClientConfig {
 
     @XmlAttribute(name = "label", required = true)
     private String label;
