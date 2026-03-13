@@ -1,8 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<!-- Only required attributes; all optional attributes should use XSD defaults. -->
-<gateway-config xmlns="http://github.com/web-socket-gateway/config/v1">
-    <websocket-server label="ws-defaults" port="9002"/>
-    <tcp-client       label="tcp-defaults" host="localhost" port="5001"/>
-    <forward from="ws-defaults"  to="tcp-defaults"/>
-    <forward from="tcp-defaults" to="ws-defaults"/>
-</gateway-config>

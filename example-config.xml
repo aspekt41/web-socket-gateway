@@ -13,28 +13,28 @@
 
     <!-- Labeled connection endpoints -->
     <websocket-server
-        label="market-data-ws"
-        bind-address="0.0.0.0"
-        port="8080"
-        path="/ws"
-        max-frame-bytes="65536"/>
+            label="websocket"
+            bind-address="0.0.0.0"
+            port="8080"
+            path="/ws"
+            max-frame-bytes="65536"/>
 
     <tcp-server
-        label="market-data-tcp-server"
-        bind-address="0.0.0.0"
-        port="9090"/>
+            label="tcp-server"
+            bind-address="0.0.0.0"
+            port="9090"/>
 
     <tcp-client
-        label="market-data-tcp"
-        host="localhost"
-        port="9090"
-        reconnect-delay-seconds="5"
-        connect-timeout-seconds="10"/>
+            label="tcp-client"
+            host="localhost"
+            port="9090"
+            reconnect-delay-seconds="5"
+            connect-timeout-seconds="10"/>
 
     <!-- Bidirectional forwarding rules -->
-    <forward from="market-data-ws"         to="market-data-tcp-server"/>
-    <forward from="market-data-tcp-server" to="market-data-ws"/>
-    <forward from="market-data-ws"         to="market-data-tcp"/>
-    <forward from="market-data-tcp"        to="market-data-ws"/>
+    <forward from="tcp-server" to="tcp-client"/>
+    <forward from="tcp-client" to="tcp-server"/>
+    <forward from="tcp-server" to="websocket"/>
+    <forward from="websocket" to="tcp-server"/>
 
 </gateway-config>
