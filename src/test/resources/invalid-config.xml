@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<gateway-config xmlns="http://github.com/web-socket-gateway/config/v1">
+    <unknown-element label="oops"/>
+</gateway-config>
