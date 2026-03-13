@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<gateway-config xmlns="http://github.com/web-socket-gateway/config/v1">
+    <websocket-server label="ws1" port="8080"/>
+    <tcp-server label="tcp-srv" port="9090"/>
+    <tcp-client label="tcp-cli" host="localhost" port="9090"/>
+    <tcp-hub label="hub1" port="9091"/>
+    <udp-multicast label="udp1" group="230.0.0.1" port="4567"/>
+    <forward from="tcp-srv" to="ws1"/>
+    <forward from="ws1" to="tcp-srv"/>
+</gateway-config>
