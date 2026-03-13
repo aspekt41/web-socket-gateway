@@ -1,8 +1,8 @@
 package net.aspekt.gateway.config;
 
 import net.aspekt.gateway.ConfigParser;
-import net.aspekt.gateway.ForwardConfig;
-import net.aspekt.gateway.GatewayConfig;
+import net.aspekt.gateway.XmlForwardConfig;
+import net.aspekt.gateway.XmlGatewayConfig;
 import net.aspekt.gateway.tcp.client.XmlTcpClientConfig;
 import net.aspekt.gateway.websocket.XmlWebSocketServerConfig;
 import org.junit.jupiter.api.Test;
@@ -33,7 +33,7 @@ class ConfigModelTest {
 
     @Test
     void forwardConfigToStringContainsFromAndTo() throws Exception {
-        ForwardConfig fwd = new ForwardConfig();
+        XmlForwardConfig fwd = new XmlForwardConfig();
         set(fwd, "from", "ws-in");
         set(fwd, "to", "tcp-out");
 
@@ -44,7 +44,7 @@ class ConfigModelTest {
 
     @Test
     void forwardConfigGettersReturnSetValues() throws Exception {
-        ForwardConfig fwd = new ForwardConfig();
+        XmlForwardConfig fwd = new XmlForwardConfig();
         set(fwd, "from", "source");
         set(fwd, "to", "sink");
 
@@ -101,7 +101,7 @@ class ConfigModelTest {
     @Test
     void gatewayConfigToStringMentionsAllSections() throws Exception {
         // Parse a real fixture so the list is populated via JAXB
-        GatewayConfig cfg = ConfigParser.parse(new java.io.File(
+        XmlGatewayConfig cfg = ConfigParser.parse(new java.io.File(
                 ConfigModelTest.class.getResource("/config/valid-full.xml").toURI()));
 
         String s = cfg.toString();
@@ -115,7 +115,7 @@ class ConfigModelTest {
 
     @Test
     void emptyGatewayConfigToStringContainsEmptyLists() {
-        GatewayConfig cfg = new GatewayConfig();
+        XmlGatewayConfig cfg = new XmlGatewayConfig();
         String s = cfg.toString();
         assertTrue(s.contains("webSocketServers=[]"));
         assertTrue(s.contains("tcpClients=[]"));

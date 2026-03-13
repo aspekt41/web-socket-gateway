@@ -1,11 +1,11 @@
 package net.aspekt.gateway;
 
 import net.aspekt.gateway.tcp.client.TcpClient;
+import net.aspekt.gateway.tcp.client.TcpClientConfig;
 import net.aspekt.gateway.tcp.client.TcpClientEndpoint;
-import net.aspekt.gateway.tcp.client.XmlTcpClientConfig;
 import net.aspekt.gateway.websocket.WebSocketEndpoint;
 import net.aspekt.gateway.websocket.WebSocketServer;
-import net.aspekt.gateway.websocket.XmlWebSocketServerConfig;
+import net.aspekt.gateway.websocket.WebSocketServerConfig;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.Timeout;
 
@@ -33,7 +33,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  * <p>The test wires up the full stack:
  * <ol>
  *   <li>A real {@link ServerSocket} acting as the remote TCP service.
- *   <li>A {@link GatewayConfig} parsed from a dynamically-generated XML config.
+ *   <li>A {@link XmlGatewayConfig} parsed from a dynamically-generated XML config.
  *   <li>A real {@link WebSocketServer} and {@link TcpClient} constructed from
  *       that config with explicit {@link WebSocketEndpoint} / {@link TcpClientEndpoint}
  *       and bidirectional {@code <forward>} rules.
@@ -79,10 +79,10 @@ class BridgeIntegrationTest {
             // 2.  Parse a gateway config and wire endpoints + forward rules.
             // ------------------------------------------------------------
             File configFile = writeTempConfig(wsPort, tcpPort);
-            GatewayConfig config = ConfigParser.parse(configFile);
+            XmlGatewayConfig config = ConfigParser.parse(configFile);
 
-            XmlWebSocketServerConfig wsCfg = config.getWebSocketServers().get(0);
-            XmlTcpClientConfig tcpCfg = config.getTcpClients().get(0);
+            WebSocketServerConfig wsCfg = config.getWebSocketServers().get(0);
+            TcpClientConfig tcpCfg = config.getTcpClients().get(0);
 
             WebSocketEndpoint wsEndpoint = new WebSocketEndpoint(wsCfg.getLabel());
             TcpClientEndpoint tcpEndpoint = new TcpClientEndpoint(tcpCfg.getLabel());

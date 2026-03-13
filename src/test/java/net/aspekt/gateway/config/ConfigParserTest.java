@@ -1,14 +1,11 @@
 package net.aspekt.gateway.config;
 
-import net.aspekt.gateway.ConfigException;
-import net.aspekt.gateway.ConfigParser;
-import net.aspekt.gateway.ForwardConfig;
-import net.aspekt.gateway.GatewayConfig;
-import net.aspekt.gateway.tcp.client.XmlTcpClientConfig;
-import net.aspekt.gateway.tcp.hub.XmlTcpHubConfig;
-import net.aspekt.gateway.tcp.server.XmlTcpServerConfig;
-import net.aspekt.gateway.udp.multicast.XmlUdpMulticastConfig;
-import net.aspekt.gateway.websocket.XmlWebSocketServerConfig;
+import net.aspekt.gateway.*;
+import net.aspekt.gateway.tcp.client.TcpClientConfig;
+import net.aspekt.gateway.tcp.hub.TcpHubConfig;
+import net.aspekt.gateway.tcp.server.TcpServerConfig;
+import net.aspekt.gateway.udp.multicast.UdpMulticastConfig;
+import net.aspekt.gateway.websocket.WebSocketServerConfig;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
@@ -42,20 +39,20 @@ class ConfigParserTest {
 
     @Test
     void parsesValidFullConfig() throws Exception {
-        GatewayConfig cfg = ConfigParser.parse(fixture("valid-full.xml"));
+        XmlGatewayConfig cfg = ConfigParser.parse(fixture("valid-full.xml"));
 
-        List<XmlWebSocketServerConfig> wsList = cfg.getWebSocketServers();
+        List<WebSocketServerConfig> wsList = cfg.getWebSocketServers();
         assertEquals(1, wsList.size());
-        XmlWebSocketServerConfig ws = wsList.get(0);
+        WebSocketServerConfig ws = wsList.getFirst();
         assertEquals("ws-one", ws.getLabel());
         assertEquals("127.0.0.1", ws.getBindAddress());
         assertEquals(9001, ws.getPort());
         assertEquals("/data", ws.getPath());
         assertEquals(32768, ws.getMaxFrameBytes());
 
-        List<XmlTcpClientConfig> tcpList = cfg.getTcpClients();
+        List<TcpClientConfig> tcpList = cfg.getTcpClients();
         assertEquals(1, tcpList.size());
-        XmlTcpClientConfig tcp = tcpList.get(0);
+        TcpClientConfig tcp = tcpList.getFirst();
         assertEquals("tcp-one", tcp.getLabel());
         assertEquals("192.168.1.100", tcp.getHost());
         assertEquals(5000, tcp.getPort());
@@ -78,14 +75,14 @@ class ConfigParserTest {
     void parsesValidConfigWithDefaults() throws Exception {
         GatewayConfig cfg = ConfigParser.parse(fixture("valid-defaults.xml"));
 
-        XmlWebSocketServerConfig ws = cfg.getWebSocketServers().get(0);
+        WebSocketServerConfig ws = cfg.getWebSocketServers().get(0);
         assertEquals("ws-defaults", ws.getLabel());
         assertEquals("0.0.0.0", ws.getBindAddress(), "bind-address should default to 0.0.0.0");
         assertEquals(9002, ws.getPort());
         assertEquals("/ws", ws.getPath(), "path should default to /ws");
         assertEquals(65536, ws.getMaxFrameBytes(), "max-frame-bytes should default to 65536");
 
-        XmlTcpClientConfig tcp = cfg.getTcpClients().get(0);
+        TcpClientConfig tcp = cfg.getTcpClients().get(0);
         assertEquals("tcp-defaults", tcp.getLabel());
         assertEquals("localhost", tcp.getHost());
         assertEquals(5001, tcp.getPort());
@@ -148,12 +145,12 @@ class ConfigParserTest {
         GatewayConfig cfg = ConfigParser.parse(exampleConfig);
 
         assertEquals(1, cfg.getWebSocketServers().size());
-        XmlWebSocketServerConfig ws = cfg.getWebSocketServers().get(0);
+        WebSocketServerConfig ws = cfg.getWebSocketServers().get(0);
         assertEquals("market-data-ws", ws.getLabel());
         assertEquals(8080, ws.getPort());
 
         assertEquals(1, cfg.getTcpClients().size());
-        XmlTcpClientConfig tcp = cfg.getTcpClients().get(0);
+        TcpClientConfig tcp = cfg.getTcpClients().get(0);
         assertEquals("market-data-tcp", tcp.getLabel());
         assertEquals("localhost", tcp.getHost());
         assertEquals(9090, tcp.getPort());
@@ -171,7 +168,7 @@ class ConfigParserTest {
 
         assertEquals(0, cfg.getWebSocketServers().size());
         assertEquals(1, cfg.getTcpServers().size());
-        XmlTcpServerConfig ts = cfg.getTcpServers().get(0);
+        TcpServerConfig ts = cfg.getTcpServers().get(0);
         assertEquals("raw-tcp-in", ts.getLabel());
         assertEquals("0.0.0.0", ts.getBindAddress(), "bind-address should default to 0.0.0.0");
         assertEquals(7001, ts.getPort());
@@ -193,7 +190,7 @@ class ConfigParserTest {
         GatewayConfig cfg = ConfigParser.parse(fixture("valid-udp-multicast.xml"));
 
         assertEquals(1, cfg.getUdpMulticasts().size());
-        XmlUdpMulticastConfig um = cfg.getUdpMulticasts().get(0);
+        UdpMulticastConfig um = cfg.getUdpMulticasts().get(0);
         assertEquals("mcast-feed", um.getLabel());
         assertEquals("230.0.0.1", um.getGroup());
         assertEquals(4001, um.getPort());
@@ -215,7 +212,7 @@ class ConfigParserTest {
         GatewayConfig cfg = ConfigParser.parse(fixture("valid-udp-multicast-defaults.xml"));
 
         assertEquals(1, cfg.getUdpMulticasts().size());
-        XmlUdpMulticastConfig um = cfg.getUdpMulticasts().get(0);
+        UdpMulticastConfig um = cfg.getUdpMulticasts().get(0);
         assertEquals("mcast-defaults", um.getLabel());
         assertEquals("239.255.0.1", um.getGroup());
         assertEquals(5000, um.getPort());
@@ -234,7 +231,7 @@ class ConfigParserTest {
         assertEquals(0, cfg.getWebSocketServers().size());
         assertEquals(0, cfg.getTcpServers().size());
         assertEquals(1, cfg.getTcpHubs().size());
-        XmlTcpHubConfig hub = cfg.getTcpHubs().get(0);
+        TcpHubConfig hub = cfg.getTcpHubs().get(0);
         assertEquals("chat-hub", hub.getLabel());
         assertEquals("127.0.0.1", hub.getBindAddress());
         assertEquals(7100, hub.getPort());
