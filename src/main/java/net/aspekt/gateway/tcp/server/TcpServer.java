@@ -28,14 +28,14 @@ public class TcpServer implements GatewayConnection {
 
     private static final Logger log = Logger.getLogger(TcpServer.class.getName());
 
-    private final XmlTcpServerConfig config;
+    private final TcpServerConfig config;
     private final TcpServerEndpoint endpoint;
 
     private EventLoopGroup bossGroup;
     private EventLoopGroup workerGroup;
     private Channel serverChannel;
 
-    public TcpServer(XmlTcpServerConfig config, TcpServerEndpoint endpoint) {
+    public TcpServer(TcpServerConfig config, TcpServerEndpoint endpoint) {
         this.config = config;
         this.endpoint = endpoint;
     }

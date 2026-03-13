@@ -29,14 +29,14 @@ public class TcpHub implements GatewayConnection {
 
     private static final Logger log = Logger.getLogger(TcpHub.class.getName());
 
-    private final XmlTcpHubConfig config;
+    private final TcpHubConfig config;
     private final TcpHubEndpoint endpoint;
 
     private EventLoopGroup bossGroup;
     private EventLoopGroup workerGroup;
     private Channel serverChannel;
 
-    public TcpHub(XmlTcpHubConfig config, TcpHubEndpoint endpoint) {
+    public TcpHub(TcpHubConfig config, TcpHubEndpoint endpoint) {
         this.config = config;
         this.endpoint = endpoint;
     }
