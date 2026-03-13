@@ -1,14 +1,9 @@
 package net.aspekt.gateway;
 
 import java.io.File;
-import java.util.List;
+import java.util.concurrent.CountDownLatch;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import net.aspekt.gateway.tcp.client.TcpClient;
-import net.aspekt.gateway.tcp.hub.TcpHub;
-import net.aspekt.gateway.tcp.server.TcpServer;
-import net.aspekt.gateway.udp.multicast.UdpMulticast;
-import net.aspekt.gateway.websocket.WebSocketServer;
 
 /**
  * Application entry point.
@@ -68,12 +63,6 @@ public class Main {
             return;
         }
 
-        List<WebSocketServer> wsServers = model.getWebSocketServers();
-        List<TcpServer> tcpServers = model.getTcpServers();
-        List<TcpHub> tcpHubs = model.getTcpHubs();
-        List<TcpClient> tcpClients = model.getTcpClients();
-        List<UdpMulticast> udpMulticasts = model.getUdpMulticasts();
-
         // ----------------------------------------------------------------
         // 2. Start all components
         // ----------------------------------------------------------------
@@ -82,48 +71,23 @@ public class Main {
             System.exit(0);
         }
 
-        for (WebSocketServer ws : wsServers) {
-            ws.start();
+        for (GatewayConnection connection : model.getConnections()) {
+            connection.start();
         }
-        for (TcpServer ts : tcpServers) {
-            ts.start();
-        }
-        for (TcpHub th : tcpHubs) {
-            th.start();
-        }
-        for (TcpClient tc : tcpClients) {
-            tc.start();
-        }
-        for (UdpMulticast um : udpMulticasts) {
-            um.start();
-        }
+
+        CountDownLatch mainThreadLock = new CountDownLatch(1);
 
         // Register shutdown hook to release resources cleanly on SIGINT / SIGTERM
         Runtime.getRuntime()
                 .addShutdownHook(new Thread(
                         () -> {
                             log.info("Shutdown hook triggered — stopping all components");
-                            tcpClients.forEach(TcpClient::stop);
-                            udpMulticasts.forEach(UdpMulticast::stop);
-                            wsServers.forEach(WebSocketServer::stop);
-                            tcpServers.forEach(TcpServer::stop);
-                            tcpHubs.forEach(TcpHub::stop);
+                            model.getConnections().forEach(GatewayConnection::stop);
+                            mainThreadLock.countDown();
                         },
                         "shutdown-hook"));
 
-        // Block the main thread until the first server channel closes.
-        if (!wsServers.isEmpty()) {
-            wsServers.get(0).awaitShutdown();
-        } else if (!tcpServers.isEmpty()) {
-            tcpServers.get(0).awaitShutdown();
-        } else if (!tcpHubs.isEmpty()) {
-            tcpHubs.get(0).awaitShutdown();
-        } else if (!udpMulticasts.isEmpty()) {
-            udpMulticasts.get(0).awaitShutdown();
-        } else {
-            // TCP clients only — block the main thread indefinitely; the shutdown hook
-            // handles cleanup and the JVM exits after all hooks complete.
-            new java.util.concurrent.CountDownLatch(1).await();
-        }
+        // Block the main thread until the shutdown is complete.
+        mainThreadLock.await();
     }
 }
