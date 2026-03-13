@@ -103,8 +103,8 @@ net.aspekt.gateway
 ├── ConfigException                  Checked exception for config errors
 ├── ForwardConfig                    JAXB model for <forward from="…" to="…"/>
 ├── ForwardRule                      Runtime value record for a wired forwarding rule (from, to labels)
-├── GatewayModel                     Runtime topology: labeled endpoint registry + forwarding rules
-├── GatewayModelBuilder              Translates GatewayConfig into a GatewayModel; retains typed component lists
+├── GatewayModel                     Runtime topology: typed connection registry + forwarding rules
+├── GatewayModelBuilder              Translates GatewayConfig into a GatewayModel; model is the sole owner of connections
 ├── ConnectionEndpoint               Interface: send, addTarget, removeTarget, onDataReceived
 ├── AbstractConnectionEndpoint       Base class: label, thread-safe target list, fan-out logic
 ├── websocket/
@@ -137,12 +137,13 @@ net.aspekt.gateway
 ## Data Flow
 
 At startup `Main` delegates construction to `GatewayModelBuilder`, which creates a
-`ConnectionEndpoint` for every labeled element in the config and registers it in a
-`GatewayModel`.  The builder then walks the `<forward>` rules and calls
-`model.addForwardRule(from, to)`, which wires the targets on the live endpoint
-objects.  `Main` retrieves the typed component lists from the builder, then starts
-all servers and clients.  If no connection entries of any kind are present in the
-config, the gateway logs a warning and exits with code 0.
+`GatewayConnection` for every labeled element in the config and registers it in a
+`GatewayModel` via typed add methods (`addWebSocketServer`, `addTcpServer`, etc.).
+The builder then walks the `<forward>` rules and calls `model.addForwardRule(from, to)`,
+which wires the targets on the live endpoint objects.  `Main` retrieves the typed
+component lists directly from the model (`model.getWebSocketServers()`, etc.) and
+starts all servers and clients.  If no connections are configured, the gateway logs
+a warning and exits with code 0.
 
 At runtime, when bytes arrive at any endpoint its handler calls
 `endpoint.onDataReceived(buf)`.  `AbstractConnectionEndpoint.onDataReceived` fans

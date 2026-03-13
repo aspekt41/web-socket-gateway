@@ -56,7 +56,7 @@ package "web-socket-gateway (net.aspekt.gateway)" {
     component "GatewayConfig\n(JAXB root)" as GatewayConfig
     component "XSD Schema\n(gateway-config.xsd)" as XSD
     component "GatewayModelBuilder" as GMBuilder
-    component "GatewayModel\n(endpoint registry\n+ forward rules)" as GModel
+    component "GatewayModel\n(typed connection registry\n+ forward rules)" as GModel
     component "ForwardRule\n(value record)" as FRule
   }
 
@@ -122,10 +122,10 @@ ConfigParser --> XSD : validates against
 ConfigParser --> GatewayConfig : produces
 Main --> GMBuilder : create & build
 GMBuilder --> GatewayConfig : reads endpoints\n& forward rules
-GMBuilder --> GModel : populates
+GMBuilder --> GModel : populates via\ntyped add methods
 GModel --> FRule : contains
-GModel --> CE : registers endpoints\n& wires targets
-Main --> GModel : checks isEmpty()
+GModel --> CE : derives endpoints\nfrom connections\n& wires targets
+Main --> GModel : queries connections\n& checks isEmpty()
 
 ' ─────────────────────────────────────────────
 ' Server → Handler → Endpoint chains
