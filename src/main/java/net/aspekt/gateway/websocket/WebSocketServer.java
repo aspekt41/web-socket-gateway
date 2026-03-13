@@ -11,6 +11,8 @@ import io.netty.handler.codec.http.websocketx.WebSocketServerProtocolHandler;
 import io.netty.handler.codec.http.websocketx.extensions.compression.WebSocketServerCompressionHandler;
 import io.netty.handler.logging.LogLevel;
 import io.netty.handler.logging.LoggingHandler;
+import net.aspekt.gateway.GatewayConnection;
+
 import java.net.InetSocketAddress;
 import java.util.logging.Logger;
 
@@ -29,7 +31,7 @@ import java.util.logging.Logger;
  * <p>Call {@link #start()} to bind and begin accepting connections.
  * Call {@link #stop()} (or close via try-with-resources) to shut down.
  */
-public class WebSocketServer implements AutoCloseable {
+public class WebSocketServer implements GatewayConnection {
 
     private static final Logger log = Logger.getLogger(WebSocketServer.class.getName());
 

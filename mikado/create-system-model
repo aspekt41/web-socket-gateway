@@ -1,0 +1,4 @@
+# Creating a Proper MVC Model
+
+- [ ] All connection objects stored in a model
+    - [X] Make all connections implement a start() interface

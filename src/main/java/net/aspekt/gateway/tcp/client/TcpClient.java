@@ -5,6 +5,8 @@ import io.netty.channel.*;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioSocketChannel;
+import net.aspekt.gateway.GatewayConnection;
+
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.logging.Logger;
@@ -26,7 +28,7 @@ import java.util.logging.Logger;
  * Call {@link #stop()} (or close via try-with-resources) to disconnect and
  * release resources.
  */
-public class TcpClient implements AutoCloseable {
+public class TcpClient implements GatewayConnection {
 
     private static final Logger log = Logger.getLogger(TcpClient.class.getName());
 

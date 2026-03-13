@@ -7,6 +7,8 @@ import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
 import io.netty.handler.logging.LogLevel;
 import io.netty.handler.logging.LoggingHandler;
+import net.aspekt.gateway.GatewayConnection;
+
 import java.net.InetSocketAddress;
 import java.util.logging.Logger;
 
@@ -22,7 +24,7 @@ import java.util.logging.Logger;
  * <p>Call {@link #start()} to bind and begin accepting connections.
  * Call {@link #stop()} (or close via try-with-resources) to shut down.
  */
-public class TcpHub implements AutoCloseable {
+public class TcpHub implements GatewayConnection {
 
     private static final Logger log = Logger.getLogger(TcpHub.class.getName());
 
