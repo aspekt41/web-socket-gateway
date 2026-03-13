@@ -10,7 +10,7 @@ import jakarta.xml.bind.annotation.XmlAttribute;
  * <p>Configures the inbound Netty raw-TCP server endpoint.
  */
 @XmlAccessorType(XmlAccessType.FIELD)
-public class TcpServerConfig {
+public class XmlTcpServerConfig {
 
     @XmlAttribute(name = "label", required = true)
     private String label;

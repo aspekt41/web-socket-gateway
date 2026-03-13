@@ -39,14 +39,14 @@ public class WebSocketServer implements GatewayConnection {
     /** Netty limits for the HTTP upgrade request (not the WS frames). */
     private static final int HTTP_MAX_CONTENT_LENGTH = 65536;
 
-    private final WebSocketServerConfig config;
+    private final XmlWebSocketServerConfig config;
     private final WebSocketEndpoint endpoint;
 
     private EventLoopGroup bossGroup;
     private EventLoopGroup workerGroup;
     private Channel serverChannel;
 
-    public WebSocketServer(WebSocketServerConfig config, WebSocketEndpoint endpoint) {
+    public WebSocketServer(XmlWebSocketServerConfig config, WebSocketEndpoint endpoint) {
         this.config = config;
         this.endpoint = endpoint;
     }

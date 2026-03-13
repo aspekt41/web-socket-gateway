@@ -1,6 +1,13 @@
 package net.aspekt.gateway;
 
-import static org.junit.jupiter.api.Assertions.*;
+import net.aspekt.gateway.tcp.client.TcpClient;
+import net.aspekt.gateway.tcp.client.TcpClientEndpoint;
+import net.aspekt.gateway.tcp.client.XmlTcpClientConfig;
+import net.aspekt.gateway.tcp.hub.TcpHub;
+import net.aspekt.gateway.tcp.hub.TcpHubEndpoint;
+import net.aspekt.gateway.tcp.hub.XmlTcpHubConfig;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.Timeout;
 
 import java.io.EOFException;
 import java.io.IOException;
@@ -8,14 +15,8 @@ import java.io.InputStream;
 import java.lang.reflect.Field;
 import java.net.ServerSocket;
 import java.net.Socket;
-import net.aspekt.gateway.tcp.client.TcpClient;
-import net.aspekt.gateway.tcp.client.TcpClientConfig;
-import net.aspekt.gateway.tcp.client.TcpClientEndpoint;
-import net.aspekt.gateway.tcp.hub.TcpHub;
-import net.aspekt.gateway.tcp.hub.TcpHubConfig;
-import net.aspekt.gateway.tcp.hub.TcpHubEndpoint;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.Timeout;
+
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 
 /**
  * End-to-end integration tests for the TCP hub.
@@ -36,7 +37,7 @@ class TcpHubIntegrationTest {
 
         TcpHub hub = null;
         try {
-            TcpHubConfig cfg = buildHubConfig("test-hub", hubPort);
+            XmlTcpHubConfig cfg = buildHubConfig("test-hub", hubPort);
             TcpHubEndpoint ep = new TcpHubEndpoint(cfg.getLabel());
             hub = new TcpHub(cfg, ep);
             hub.start();
@@ -89,10 +90,10 @@ class TcpHubIntegrationTest {
         TcpHub hub = null;
         TcpClient tcpClient = null;
         try {
-            TcpHubConfig hubCfg = buildHubConfig("test-hub-fwd", hubPort);
+            XmlTcpHubConfig hubCfg = buildHubConfig("test-hub-fwd", hubPort);
             TcpHubEndpoint hubEp = new TcpHubEndpoint(hubCfg.getLabel());
 
-            TcpClientConfig cliCfg = buildTcpClientConfig("backend-client", backendPort);
+            XmlTcpClientConfig cliCfg = buildTcpClientConfig("backend-client", backendPort);
             TcpClientEndpoint cliEp = new TcpClientEndpoint(cliCfg.getLabel());
 
             // Hub forwards to TCP client (backend)
@@ -141,16 +142,16 @@ class TcpHubIntegrationTest {
     // Config builders (using reflection since POJOs have no public arg constructors)
     // -----------------------------------------------------------------------
 
-    private static TcpHubConfig buildHubConfig(String label, int port) throws Exception {
-        TcpHubConfig cfg = new TcpHubConfig();
+    private static XmlTcpHubConfig buildHubConfig(String label, int port) throws Exception {
+        XmlTcpHubConfig cfg = new XmlTcpHubConfig();
         setField(cfg, "label", label);
         setField(cfg, "bindAddress", "127.0.0.1");
         setField(cfg, "port", port);
         return cfg;
     }
 
-    private static TcpClientConfig buildTcpClientConfig(String label, int port) throws Exception {
-        TcpClientConfig cfg = new TcpClientConfig();
+    private static XmlTcpClientConfig buildTcpClientConfig(String label, int port) throws Exception {
+        XmlTcpClientConfig cfg = new XmlTcpClientConfig();
         setField(cfg, "label", label);
         setField(cfg, "host", "127.0.0.1");
         setField(cfg, "port", port);

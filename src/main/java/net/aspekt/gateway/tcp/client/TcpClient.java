@@ -33,7 +33,7 @@ public class TcpClient implements GatewayConnection {
 
     private static final Logger log = Logger.getLogger(TcpClient.class.getName());
 
-    private final TcpClientConfig config;
+    private final XmlTcpClientConfig config;
     private final TcpClientEndpoint endpoint;
 
     private EventLoopGroup eventLoopGroup;
@@ -41,7 +41,7 @@ public class TcpClient implements GatewayConnection {
     private volatile Channel channel;
     private final AtomicBoolean stopped = new AtomicBoolean(false);
 
-    public TcpClient(TcpClientConfig config, TcpClientEndpoint endpoint) {
+    public TcpClient(XmlTcpClientConfig config, TcpClientEndpoint endpoint) {
         this.config = config;
         this.endpoint = endpoint;
     }

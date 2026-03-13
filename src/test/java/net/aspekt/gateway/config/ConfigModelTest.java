@@ -1,15 +1,16 @@
 package net.aspekt.gateway.config;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-
-import java.lang.reflect.Field;
 import net.aspekt.gateway.ConfigParser;
 import net.aspekt.gateway.ForwardConfig;
 import net.aspekt.gateway.GatewayConfig;
-import net.aspekt.gateway.tcp.client.TcpClientConfig;
-import net.aspekt.gateway.websocket.WebSocketServerConfig;
+import net.aspekt.gateway.tcp.client.XmlTcpClientConfig;
+import net.aspekt.gateway.websocket.XmlWebSocketServerConfig;
 import org.junit.jupiter.api.Test;
+
+import java.lang.reflect.Field;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
  * Tests for the {@code toString()} methods and simple accessors of config model classes.
@@ -57,7 +58,7 @@ class ConfigModelTest {
 
     @Test
     void tcpClientConfigToStringContainsKeyFields() throws Exception {
-        TcpClientConfig cfg = new TcpClientConfig();
+        XmlTcpClientConfig cfg = new XmlTcpClientConfig();
         set(cfg, "label", "my-tcp");
         set(cfg, "host", "10.0.0.1");
         set(cfg, "port", 4321);
@@ -78,7 +79,7 @@ class ConfigModelTest {
 
     @Test
     void webSocketServerConfigToStringContainsKeyFields() throws Exception {
-        WebSocketServerConfig cfg = new WebSocketServerConfig();
+        XmlWebSocketServerConfig cfg = new XmlWebSocketServerConfig();
         set(cfg, "label", "my-ws");
         set(cfg, "bindAddress", "127.0.0.1");
         set(cfg, "port", 8080);

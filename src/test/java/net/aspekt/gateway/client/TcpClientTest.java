@@ -1,13 +1,14 @@
 package net.aspekt.gateway.client;
 
-import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import net.aspekt.gateway.tcp.client.TcpClient;
+import net.aspekt.gateway.tcp.client.TcpClientEndpoint;
+import net.aspekt.gateway.tcp.client.XmlTcpClientConfig;
+import org.junit.jupiter.api.Test;
 
 import java.lang.reflect.Field;
-import net.aspekt.gateway.tcp.client.TcpClient;
-import net.aspekt.gateway.tcp.client.TcpClientConfig;
-import net.aspekt.gateway.tcp.client.TcpClientEndpoint;
-import org.junit.jupiter.api.Test;
+
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 /**
  * Unit tests for {@link TcpClient} lifecycle methods that do not require a live
@@ -19,8 +20,8 @@ import org.junit.jupiter.api.Test;
  */
 class TcpClientTest {
 
-    private static TcpClientConfig minimalConfig() throws Exception {
-        TcpClientConfig cfg = new TcpClientConfig();
+    private static XmlTcpClientConfig minimalConfig() throws Exception {
+        XmlTcpClientConfig cfg = new XmlTcpClientConfig();
         setField(cfg, "host", "localhost");
         setField(cfg, "port", 9090);
         return cfg;
@@ -80,7 +81,7 @@ class TcpClientTest {
 
     @Test
     void getReconnectDelaySecondsReturnsConfigValue() throws Exception {
-        TcpClientConfig cfg = minimalConfig();
+        XmlTcpClientConfig cfg = minimalConfig();
         setField(cfg, "reconnectDelaySeconds", 7);
         TcpClient client = new TcpClient(cfg, new TcpClientEndpoint("tcp-test"));
         assertEquals(7, client.getReconnectDelaySeconds());

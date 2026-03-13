@@ -1,7 +1,13 @@
 package net.aspekt.gateway;
 
-import static org.junit.jupiter.api.Assertions.assertArrayEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import net.aspekt.gateway.tcp.client.TcpClient;
+import net.aspekt.gateway.tcp.client.TcpClientEndpoint;
+import net.aspekt.gateway.tcp.client.XmlTcpClientConfig;
+import net.aspekt.gateway.websocket.WebSocketEndpoint;
+import net.aspekt.gateway.websocket.WebSocketServer;
+import net.aspekt.gateway.websocket.XmlWebSocketServerConfig;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.Timeout;
 
 import java.io.EOFException;
 import java.io.File;
@@ -17,14 +23,9 @@ import java.nio.file.Files;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
-import net.aspekt.gateway.tcp.client.TcpClient;
-import net.aspekt.gateway.tcp.client.TcpClientConfig;
-import net.aspekt.gateway.tcp.client.TcpClientEndpoint;
-import net.aspekt.gateway.websocket.WebSocketEndpoint;
-import net.aspekt.gateway.websocket.WebSocketServer;
-import net.aspekt.gateway.websocket.WebSocketServerConfig;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.Timeout;
+
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
  * End-to-end integration test for the TCP↔WebSocket bridge.
@@ -80,8 +81,8 @@ class BridgeIntegrationTest {
             File configFile = writeTempConfig(wsPort, tcpPort);
             GatewayConfig config = ConfigParser.parse(configFile);
 
-            WebSocketServerConfig wsCfg = config.getWebSocketServers().get(0);
-            TcpClientConfig tcpCfg = config.getTcpClients().get(0);
+            XmlWebSocketServerConfig wsCfg = config.getWebSocketServers().get(0);
+            XmlTcpClientConfig tcpCfg = config.getTcpClients().get(0);
 
             WebSocketEndpoint wsEndpoint = new WebSocketEndpoint(wsCfg.getLabel());
             TcpClientEndpoint tcpEndpoint = new TcpClientEndpoint(tcpCfg.getLabel());

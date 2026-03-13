@@ -33,13 +33,13 @@ public class UdpMulticast implements GatewayConnection {
 
     private static final Logger log = Logger.getLogger(UdpMulticast.class.getName());
 
-    private final UdpMulticastConfig config;
+    private final XmlUdpMulticastConfig config;
     private final UdpMulticastEndpoint endpoint;
 
     private EventLoopGroup group;
     private NioDatagramChannel channel;
 
-    public UdpMulticast(UdpMulticastConfig config, UdpMulticastEndpoint endpoint) {
+    public UdpMulticast(XmlUdpMulticastConfig config, UdpMulticastEndpoint endpoint) {
         this.config = config;
         this.endpoint = endpoint;
     }
