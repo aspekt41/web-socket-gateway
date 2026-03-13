@@ -21,8 +21,8 @@ import net.aspekt.gateway.websocket.WebSocketServer;
  * <p>Startup sequence:
  * <ol>
  *   <li>Parse and validate the XML configuration file.
- *   <li>Build the {@link GatewayModel} via {@link GatewayModelBuilder}, which creates a labeled
- *       {@link ConnectionEndpoint} for every endpoint declaration and wires all forwarding rules.
+ *   <li>Build the {@link GatewayModel} via {@link GatewayModelBuilder}, which creates a {@link
+ *       GatewayConnection} for every endpoint declaration and wires all forwarding rules.
  *   <li>Start all servers and clients.
  * </ol>
  *
@@ -68,16 +68,16 @@ public class Main {
             return;
         }
 
-        List<WebSocketServer> wsServers = builder.getWsServers();
-        List<TcpServer> tcpServers = builder.getTcpServers();
-        List<TcpHub> tcpHubs = builder.getTcpHubs();
-        List<TcpClient> tcpClients = builder.getTcpClients();
-        List<UdpMulticast> udpMulticasts = builder.getUdpMulticasts();
+        List<WebSocketServer> wsServers = model.getWebSocketServers();
+        List<TcpServer> tcpServers = model.getTcpServers();
+        List<TcpHub> tcpHubs = model.getTcpHubs();
+        List<TcpClient> tcpClients = model.getTcpClients();
+        List<UdpMulticast> udpMulticasts = model.getUdpMulticasts();
 
         // ----------------------------------------------------------------
         // 2. Start all components
         // ----------------------------------------------------------------
-        if (model.getEndpoints().isEmpty()) {
+        if (model.getConnections().isEmpty()) {
             log.warning("No connection entries found in config — exiting.");
             System.exit(0);
         }
