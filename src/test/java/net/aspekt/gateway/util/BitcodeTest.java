@@ -2,89 +2,185 @@ package net.aspekt.gateway.util;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+import java.math.BigInteger;
 import org.junit.jupiter.api.Test;
 
 class BitcodeTest {
 
     // -----------------------------------------------------------------------
-    // Construction — happy path
+    // OfLong — construction
     // -----------------------------------------------------------------------
 
     @Test
-    void constructsWithValidArguments() {
-        Bitcode bc = new Bitcode("ACK", 0x06L);
+    void ofLongConstructsViaFactory() {
+        Bitcode bc = Bitcode.of("ACK", 0x06L);
+        assertInstanceOf(Bitcode.OfLong.class, bc);
         assertEquals("ACK", bc.name());
-        assertEquals(0x06L, bc.value());
+        assertEquals(0x06L, ((Bitcode.OfLong) bc).value());
     }
 
     @Test
-    void zeroValueIsValid() {
-        assertEquals(0L, new Bitcode("NONE", 0L).value());
+    void ofLongZeroValueIsValid() {
+        assertEquals(0L, ((Bitcode.OfLong) Bitcode.of("NONE", 0L)).value());
     }
 
     @Test
-    void negativeValueIsValid() {
-        // long can hold any bit pattern, including those with the sign bit set
-        assertEquals(-1L, new Bitcode("ALL_ONES", -1L).value());
+    void ofLongNegativeValueIsValid() {
+        assertEquals(-1L, ((Bitcode.OfLong) Bitcode.of("ALL_ONES", -1L)).value());
     }
 
     @Test
-    void maxLongValueIsValid() {
-        assertEquals(Long.MAX_VALUE, new Bitcode("MAX", Long.MAX_VALUE).value());
+    void ofLongMaxValueIsValid() {
+        assertEquals(Long.MAX_VALUE, ((Bitcode.OfLong) Bitcode.of("MAX", Long.MAX_VALUE)).value());
     }
 
     @Test
-    void minLongValueIsValid() {
-        assertEquals(Long.MIN_VALUE, new Bitcode("MIN", Long.MIN_VALUE).value());
-    }
-
-    // -----------------------------------------------------------------------
-    // Construction — validation
-    // -----------------------------------------------------------------------
-
-    @Test
-    void nullNameThrows() {
-        assertThrows(IllegalArgumentException.class, () -> new Bitcode(null, 0L));
-    }
-
-    @Test
-    void blankNameThrows() {
-        assertThrows(IllegalArgumentException.class, () -> new Bitcode("   ", 0L));
-    }
-
-    @Test
-    void emptyNameThrows() {
-        assertThrows(IllegalArgumentException.class, () -> new Bitcode("", 0L));
+    void ofLongMinValueIsValid() {
+        assertEquals(Long.MIN_VALUE, ((Bitcode.OfLong) Bitcode.of("MIN", Long.MIN_VALUE)).value());
     }
 
     // -----------------------------------------------------------------------
-    // Record semantics
+    // OfLong — validation
     // -----------------------------------------------------------------------
 
     @Test
-    void equalityByValue() {
-        assertEquals(new Bitcode("ACK", 0x06L), new Bitcode("ACK", 0x06L));
+    void ofLongNullNameThrows() {
+        assertThrows(IllegalArgumentException.class, () -> Bitcode.of(null, 0L));
     }
 
     @Test
-    void inequalityOnName() {
-        assertNotEquals(new Bitcode("ACK", 0x06L), new Bitcode("NAK", 0x06L));
+    void ofLongBlankNameThrows() {
+        assertThrows(IllegalArgumentException.class, () -> Bitcode.of("   ", 0L));
     }
 
     @Test
-    void inequalityOnValue() {
-        assertNotEquals(new Bitcode("ACK", 0x06L), new Bitcode("ACK", 0x07L));
+    void ofLongEmptyNameThrows() {
+        assertThrows(IllegalArgumentException.class, () -> Bitcode.of("", 0L));
+    }
+
+    // -----------------------------------------------------------------------
+    // OfLong — record semantics
+    // -----------------------------------------------------------------------
+
+    @Test
+    void ofLongEqualityByValue() {
+        assertEquals(Bitcode.of("ACK", 0x06L), Bitcode.of("ACK", 0x06L));
     }
 
     @Test
-    void hashCodeConsistentWithEquality() {
-        assertEquals(new Bitcode("ACK", 0x06L).hashCode(), new Bitcode("ACK", 0x06L).hashCode());
+    void ofLongInequalityOnName() {
+        assertNotEquals(Bitcode.of("ACK", 0x06L), Bitcode.of("NAK", 0x06L));
     }
 
     @Test
-    void toStringContainsFields() {
-        String s = new Bitcode("ACK", 0x06L).toString();
+    void ofLongInequalityOnValue() {
+        assertNotEquals(Bitcode.of("ACK", 0x06L), Bitcode.of("ACK", 0x07L));
+    }
+
+    @Test
+    void ofLongHashCodeConsistentWithEquality() {
+        assertEquals(
+                Bitcode.of("ACK", 0x06L).hashCode(), Bitcode.of("ACK", 0x06L).hashCode());
+    }
+
+    @Test
+    void ofLongToStringContainsFields() {
+        String s = Bitcode.of("ACK", 0x06L).toString();
         assertTrue(s.contains("ACK"));
         assertTrue(s.contains("6"));
+    }
+
+    // -----------------------------------------------------------------------
+    // OfBig — construction
+    // -----------------------------------------------------------------------
+
+    @Test
+    void ofBigConstructsViaFactory() {
+        BigInteger v = BigInteger.valueOf(0x06L);
+        Bitcode bc = Bitcode.of("ACK", v);
+        assertInstanceOf(Bitcode.OfBig.class, bc);
+        assertEquals("ACK", bc.name());
+        assertEquals(v, ((Bitcode.OfBig) bc).value());
+    }
+
+    @Test
+    void ofBigLargeValueIsValid() {
+        BigInteger v = BigInteger.ONE.shiftLeft(128).subtract(BigInteger.ONE);
+        assertEquals(v, ((Bitcode.OfBig) Bitcode.of("WIDE", v)).value());
+    }
+
+    // -----------------------------------------------------------------------
+    // OfBig — validation
+    // -----------------------------------------------------------------------
+
+    @Test
+    void ofBigNullNameThrows() {
+        assertThrows(IllegalArgumentException.class, () -> Bitcode.of(null, BigInteger.ONE));
+    }
+
+    @Test
+    void ofBigBlankNameThrows() {
+        assertThrows(IllegalArgumentException.class, () -> Bitcode.of("   ", BigInteger.ONE));
+    }
+
+    @Test
+    void ofBigNullValueThrows() {
+        assertThrows(IllegalArgumentException.class, () -> new Bitcode.OfBig("f", null));
+    }
+
+    // -----------------------------------------------------------------------
+    // OfBig — record semantics
+    // -----------------------------------------------------------------------
+
+    @Test
+    void ofBigEqualityByValue() {
+        assertEquals(Bitcode.of("X", BigInteger.TEN), Bitcode.of("X", BigInteger.TEN));
+    }
+
+    @Test
+    void ofBigInequalityOnName() {
+        assertNotEquals(Bitcode.of("A", BigInteger.TEN), Bitcode.of("B", BigInteger.TEN));
+    }
+
+    @Test
+    void ofBigInequalityOnValue() {
+        assertNotEquals(Bitcode.of("A", BigInteger.ONE), Bitcode.of("A", BigInteger.TEN));
+    }
+
+    @Test
+    void ofBigHashCodeConsistentWithEquality() {
+        assertEquals(
+                Bitcode.of("X", BigInteger.TEN).hashCode(),
+                Bitcode.of("X", BigInteger.TEN).hashCode());
+    }
+
+    // -----------------------------------------------------------------------
+    // Cross-variant
+    // -----------------------------------------------------------------------
+
+    @Test
+    void ofLongAndOfBigAreNotEqual() {
+        // Different types — must not be equal even if numerically the same.
+        assertNotEquals(Bitcode.of("f", 6L), Bitcode.of("f", BigInteger.valueOf(6)));
+    }
+
+    @Test
+    void patternSwitchDispatchesCorrectly() {
+        Bitcode longBc = Bitcode.of("a", 42L);
+        Bitcode bigBc = Bitcode.of("b", BigInteger.valueOf(99));
+
+        String longResult =
+                switch (longBc) {
+                    case Bitcode.OfLong bc -> "long:" + bc.value();
+                    case Bitcode.OfBig bc -> "big:" + bc.value();
+                };
+        String bigResult =
+                switch (bigBc) {
+                    case Bitcode.OfLong bc -> "long:" + bc.value();
+                    case Bitcode.OfBig bc -> "big:" + bc.value();
+                };
+
+        assertEquals("long:42", longResult);
+        assertEquals("big:99", bigResult);
     }
 }

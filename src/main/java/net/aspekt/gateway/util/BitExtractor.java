@@ -41,7 +41,7 @@ public final class BitExtractor {
         }
         List<Bitcode> result = new ArrayList<>(fields.size());
         for (Bitfield field : fields) {
-            result.add(new Bitcode(field.name(), extractBits(data, field.startBit(), field.length())));
+            result.add(Bitcode.of(field.name(), extractBits(data, field.startBit(), field.length())));
         }
         return List.copyOf(result);
     }

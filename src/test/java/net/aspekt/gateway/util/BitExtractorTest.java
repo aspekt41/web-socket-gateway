@@ -503,7 +503,7 @@ class BitExtractorTest {
         byte[] data = bytes(0xAB);
         List<Bitcode> result = BitExtractor.extract(data, List.of(new Bitfield("high", 0, 4)));
         assertEquals(1, result.size());
-        assertEquals(new Bitcode("high", 0xAL), result.get(0));
+        assertEquals(Bitcode.of("high", 0xAL), result.get(0));
     }
 
     @Test
@@ -513,8 +513,8 @@ class BitExtractorTest {
         List<Bitfield> fields = List.of(new Bitfield("hi", 0, 4), new Bitfield("lo", 4, 4));
         List<Bitcode> result = BitExtractor.extract(data, fields);
         assertEquals(2, result.size());
-        assertEquals(new Bitcode("hi", 0xAL), result.get(0));
-        assertEquals(new Bitcode("lo", 0xBL), result.get(1));
+        assertEquals(Bitcode.of("hi", 0xAL), result.get(0));
+        assertEquals(Bitcode.of("lo", 0xBL), result.get(1));
     }
 
     @Test
@@ -527,9 +527,9 @@ class BitExtractorTest {
         List<Bitfield> fields =
                 List.of(new Bitfield("word", 0, 16), new Bitfield("byte2", 16, 8), new Bitfield("nibble", 24, 4));
         List<Bitcode> result = BitExtractor.extract(data, fields);
-        assertEquals(new Bitcode("word", 0xDEADL), result.get(0));
-        assertEquals(new Bitcode("byte2", 0xBEL), result.get(1));
-        assertEquals(new Bitcode("nibble", 0xEL), result.get(2));
+        assertEquals(Bitcode.of("word", 0xDEADL), result.get(0));
+        assertEquals(Bitcode.of("byte2", 0xBEL), result.get(1));
+        assertEquals(Bitcode.of("nibble", 0xEL), result.get(2));
     }
 
     @Test
@@ -544,6 +544,6 @@ class BitExtractorTest {
     @Test
     void extractResultIsUnmodifiable() {
         List<Bitcode> result = BitExtractor.extract(bytes(0xFF), List.of(new Bitfield("f", 0, 8)));
-        assertThrows(UnsupportedOperationException.class, () -> result.add(new Bitcode("x", 0)));
+        assertThrows(UnsupportedOperationException.class, () -> result.add(Bitcode.of("x", 0)));
     }
 }
