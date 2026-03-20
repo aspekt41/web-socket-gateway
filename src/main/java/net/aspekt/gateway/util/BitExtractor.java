@@ -21,16 +21,16 @@ public final class BitExtractor {
      * results as a list of {@link Bitcode} values in the same order, retaining
      * each field's name.
      *
-     * <p>Each field must satisfy the constraints of {@link #extractBits}: its
-     * {@code length} must be between 1 and 64 and its range must not exceed the
-     * bounds of {@code data}.
+     * <p>Fields of 64 bits or fewer are returned as {@link Bitcode.OfLong}; wider
+     * fields are returned as {@link Bitcode.OfBigInteger}.  Each field's range
+     * must not exceed the bounds of {@code data}.
      *
      * @param data   the source byte array; must not be {@code null}
      * @param fields the fields to extract; must not be {@code null}
      * @return an unmodifiable list of {@link Bitcode} values in field order
      * @throws IllegalArgumentException if {@code data} or {@code fields} is
      *     {@code null}, or if any field fails the validation in
-     *     {@link #extractBits}
+     *     {@link #extractBits} / {@link #extractBigBits}
      */
     public static List<Bitcode> extract(byte[] data, List<Bitfield> fields) {
         if (data == null) {
@@ -41,7 +41,11 @@ public final class BitExtractor {
         }
         List<Bitcode> result = new ArrayList<>(fields.size());
         for (Bitfield field : fields) {
-            result.add(Bitcode.of(field.name(), extractBits(data, field.startBit(), field.length())));
+            if (field.length() <= 64) {
+                result.add(Bitcode.of(field.name(), extractBits(data, field.startBit(), field.length())));
+            } else {
+                result.add(Bitcode.of(field.name(), extractBigBits(data, field.startBit(), field.length())));
+            }
         }
         return List.copyOf(result);
     }
@@ -56,16 +60,16 @@ public final class BitExtractor {
      * them back so that bit 0 of the field becomes the least-significant bit of
      * the returned value.
      *
-     * <p>Each field must satisfy the constraints of {@link #extractBits}: its
-     * {@code length} must be between 1 and 64 and its range must not exceed the
-     * bounds of {@code data}.
+     * <p>Fields of 64 bits or fewer are returned as {@link Bitcode.OfLong}; wider
+     * fields are returned as {@link Bitcode.OfBigInteger}.  Each field's range
+     * must not exceed the bounds of {@code data}.
      *
      * @param data   the source byte array; must not be {@code null}
      * @param fields the fields to extract; must not be {@code null}
      * @return an unmodifiable list of bit-reversed {@link Bitcode} values in field order
      * @throws IllegalArgumentException if {@code data} or {@code fields} is
      *     {@code null}, or if any field fails the validation in
-     *     {@link #extractBits}
+     *     {@link #extractBits} / {@link #extractBigBits}
      */
     public static List<Bitcode> extractReversed(byte[] data, List<Bitfield> fields) {
         if (data == null) {
@@ -76,8 +80,14 @@ public final class BitExtractor {
         }
         List<Bitcode> result = new ArrayList<>(fields.size());
         for (Bitfield field : fields) {
-            long raw = extractBits(data, field.startBit(), field.length());
-            result.add(Bitcode.of(field.name(), reverseBits(raw, field.length())));
+            if (field.length() <= 64) {
+                long raw = extractBits(data, field.startBit(), field.length());
+                result.add(Bitcode.of(field.name(), reverseBits(raw, field.length())));
+            } else {
+                result.add(Bitcode.of(
+                        field.name(),
+                        reverseBigBits(extractBigBits(data, field.startBit(), field.length()), field.length())));
+            }
         }
         return List.copyOf(result);
     }

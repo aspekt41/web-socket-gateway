@@ -547,6 +547,26 @@ class BitExtractorTest {
         assertThrows(UnsupportedOperationException.class, () -> result.add(Bitcode.of("x", 0)));
     }
 
+    @Test
+    void extractWideFieldReturnsBigIntegerBitcode() {
+        // 9 bytes = 72 bits; request all 72 so length > 64 forces the BigInteger path.
+        byte[] data = bytes(0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09);
+        List<Bitcode> result = BitExtractor.extract(data, List.of(new Bitfield("wide", 0, 72)));
+        assertInstanceOf(Bitcode.OfBig.class, result.get(0));
+        BigInteger expected = new BigInteger("010203040506070809", 16);
+        assertEquals(expected, ((Bitcode.OfBig) result.get(0)).value());
+    }
+
+    @Test
+    void extractMixedWidthFieldsReturnCorrectBitcodeTypes() {
+        // 9 bytes; first field is 64 bits (long), second is 8 bits (long), verify types.
+        byte[] data = bytes(0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09);
+        List<Bitfield> fields = List.of(new Bitfield("narrow", 0, 64), new Bitfield("wide", 0, 72));
+        List<Bitcode> result = BitExtractor.extract(data, fields);
+        assertInstanceOf(Bitcode.OfLong.class, result.get(0));
+        assertInstanceOf(Bitcode.OfBig.class, result.get(1));
+    }
+
     // -----------------------------------------------------------------------
     // extractReversed(byte[], List<Bitfield>) — argument validation
     // -----------------------------------------------------------------------
@@ -655,5 +675,27 @@ class BitExtractorTest {
             long roundTripped = BitExtractor.reverseBits(reversed, field.length());
             assertEquals(original, roundTripped, "round-trip failed for field: " + field.name());
         }
+    }
+
+    @Test
+    void extractReversedWideFieldReturnsBigIntegerBitcode() {
+        // 9 bytes = 72 bits; request all 72 so length > 64 forces the BigInteger path.
+        byte[] data = bytes(0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09);
+        List<Bitcode> result = BitExtractor.extractReversed(data, List.of(new Bitfield("wide", 0, 72)));
+        assertInstanceOf(Bitcode.OfBig.class, result.get(0));
+        // Reversing the BigInteger result must equal reverseBigBits of the raw extraction.
+        BigInteger raw = BitExtractor.extractBigBits(data, 0, 72);
+        BigInteger expected = BitExtractor.reverseBigBits(raw, 72);
+        assertEquals(expected, ((Bitcode.OfBig) result.get(0)).value());
+    }
+
+    @Test
+    void extractReversedWideFieldRoundTrips() {
+        // Reversing twice must reproduce the original wide extraction.
+        byte[] data = bytes(0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09);
+        BigInteger original = BitExtractor.extractBigBits(data, 0, 72);
+        BigInteger reversed = BitExtractor.reverseBigBits(original, 72);
+        BigInteger roundTripped = BitExtractor.reverseBigBits(reversed, 72);
+        assertEquals(original, roundTripped);
     }
 }
