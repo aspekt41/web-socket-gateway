@@ -2,6 +2,7 @@ package net.aspekt.gateway.util;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+import java.math.BigInteger;
 import org.junit.jupiter.api.Test;
 
 class BitExtractorTest {
@@ -226,5 +227,95 @@ class BitExtractorTest {
         // 3-byte array; read all 24 bits starting at 0.
         byte[] data = bytes(0xDE, 0xAD, 0xBE);
         assertEquals(0xDEADBEL, BitExtractor.extractBits(data, 0, 24));
+    }
+
+    // -----------------------------------------------------------------------
+    // extractBigBits — argument validation
+    // -----------------------------------------------------------------------
+
+    @Test
+    void bigNullDataThrows() {
+        assertThrows(IllegalArgumentException.class, () -> BitExtractor.extractBigBits(null, 0, 8));
+    }
+
+    @Test
+    void bigZeroLengthThrows() {
+        assertThrows(IllegalArgumentException.class, () -> BitExtractor.extractBigBits(bytes(0xFF), 0, 0));
+    }
+
+    @Test
+    void bigNegativeStartBitThrows() {
+        assertThrows(IllegalArgumentException.class, () -> BitExtractor.extractBigBits(bytes(0xFF), -1, 4));
+    }
+
+    @Test
+    void bigRangeExceedsArrayThrows() {
+        assertThrows(IllegalArgumentException.class, () -> BitExtractor.extractBigBits(bytes(0xFF), 1, 8));
+    }
+
+    // -----------------------------------------------------------------------
+    // extractBigBits — parity with extractBits for ≤64-bit cases
+    // -----------------------------------------------------------------------
+
+    @Test
+    void bigReadFullByte() {
+        assertEquals(BigInteger.valueOf(0xABL), BitExtractor.extractBigBits(bytes(0xAB), 0, 8));
+    }
+
+    @Test
+    void bigReadAllBytesAs64Bits() {
+        byte[] data = bytes(0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08);
+        assertEquals(new BigInteger("0102030405060708", 16), BitExtractor.extractBigBits(data, 0, 64));
+    }
+
+    @Test
+    void bigReadCrossByteTwoBitsStraddlingBoundary() {
+        assertEquals(BigInteger.valueOf(3L), BitExtractor.extractBigBits(bytes(0x01, 0x80), 7, 2));
+    }
+
+    @Test
+    void bigReadHighBitPattern() {
+        // All 64 bits set — value is 2^64 - 1, which BigInteger handles without sign issues.
+        byte[] data = bytes(0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF);
+        BigInteger expected = BigInteger.ONE.shiftLeft(64).subtract(BigInteger.ONE);
+        assertEquals(expected, BitExtractor.extractBigBits(data, 0, 64));
+    }
+
+    // -----------------------------------------------------------------------
+    // extractBigBits — >64-bit extractions
+    // -----------------------------------------------------------------------
+
+    @Test
+    void bigRead72BitsAligned() {
+        // 9 bytes, all read → 72-bit value 0x010203040506070809.
+        byte[] data = bytes(0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09);
+        BigInteger expected = new BigInteger("010203040506070809", 16);
+        assertEquals(expected, BitExtractor.extractBigBits(data, 0, 72));
+    }
+
+    @Test
+    void bigRead128BitsAligned() {
+        // 16 bytes of known pattern.
+        byte[] data =
+                bytes(0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0A, 0x0B, 0x0C, 0x0D, 0x0E, 0x0F);
+        BigInteger expected = new BigInteger("000102030405060708090A0B0C0D0E0F", 16);
+        assertEquals(expected, BitExtractor.extractBigBits(data, 0, 128));
+    }
+
+    @Test
+    void bigRead80BitsUnaligned() {
+        // 11 bytes; extract 80 bits starting at bit 8 (= bytes 1–10).
+        byte[] data = bytes(0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0A);
+        BigInteger expected = new BigInteger("0102030405060708090A", 16);
+        assertEquals(expected, BitExtractor.extractBigBits(data, 8, 80));
+    }
+
+    @Test
+    void bigRead65BitsStraddling64BitBoundary() {
+        // 9-byte array: first 8 bytes = 0xFF, last byte = 0x80 (MSB set).
+        // Extract 65 bits from bit 0: 64 ones followed by a 1 → value = 2^65 - 1.
+        byte[] data = bytes(0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0x80);
+        BigInteger expected = BigInteger.ONE.shiftLeft(65).subtract(BigInteger.ONE);
+        assertEquals(expected, BitExtractor.extractBigBits(data, 0, 65));
     }
 }

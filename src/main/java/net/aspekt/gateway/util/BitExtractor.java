@@ -1,5 +1,7 @@
 package net.aspekt.gateway.util;
 
+import java.math.BigInteger;
+
 /**
  * Utility class for extracting an arbitrary run of bits from a byte array.
  *
@@ -67,6 +69,64 @@ public final class BitExtractor {
             int bits = (Byte.toUnsignedInt(data[byteIndex]) >> shift) & mask;
 
             result = (result << bitsToRead) | bits;
+            currentBit += bitsToRead;
+            bitsRemaining -= bitsToRead;
+        }
+
+        return result;
+    }
+
+    /**
+     * Extracts {@code length} bits starting at bit offset {@code startBit} from
+     * {@code data} and returns them right-aligned in a {@link BigInteger}.
+     *
+     * <p>Use this method when {@code length} may exceed 64. For extractions of 64
+     * bits or fewer, prefer {@link #extractBits(byte[], int, int)} which is faster.
+     *
+     * @param data     the source byte array; must not be {@code null}
+     * @param startBit the zero-based index of the first bit to extract
+     * @param length   the number of bits to extract (1 or more)
+     * @return the extracted bits as a non-negative {@link BigInteger}
+     * @throws IllegalArgumentException if {@code data} is {@code null}, {@code
+     *     length} is less than 1, {@code startBit} is negative, or the requested
+     *     range extends beyond the end of {@code data}
+     */
+    public static BigInteger extractBigBits(byte[] data, int startBit, int length) {
+        if (data == null) {
+            throw new IllegalArgumentException("data must not be null");
+        }
+        if (length < 1) {
+            throw new IllegalArgumentException("length must be at least 1, got: " + length);
+        }
+        if (startBit < 0) {
+            throw new IllegalArgumentException("startBit must not be negative, got: " + startBit);
+        }
+        long endBit = (long) startBit + length;
+        long totalBits = (long) data.length * 8;
+        if (endBit > totalBits) {
+            throw new IllegalArgumentException("Requested range [" + startBit + ", " + endBit + ") exceeds array"
+                    + " capacity of "
+                    + totalBits
+                    + " bits ("
+                    + data.length
+                    + " bytes)");
+        }
+
+        BigInteger result = BigInteger.ZERO;
+        int bitsRemaining = length;
+        int currentBit = startBit;
+
+        while (bitsRemaining > 0) {
+            int byteIndex = currentBit / 8;
+            int bitOffsetInByte = currentBit % 8;
+            int bitsAvailableInByte = 8 - bitOffsetInByte;
+            int bitsToRead = Math.min(bitsAvailableInByte, bitsRemaining);
+
+            int shift = bitsAvailableInByte - bitsToRead;
+            int mask = (1 << bitsToRead) - 1;
+            int bits = (Byte.toUnsignedInt(data[byteIndex]) >> shift) & mask;
+
+            result = result.shiftLeft(bitsToRead).or(BigInteger.valueOf(bits));
             currentBit += bitsToRead;
             bitsRemaining -= bitsToRead;
         }
