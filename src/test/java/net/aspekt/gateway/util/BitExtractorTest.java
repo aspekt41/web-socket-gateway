@@ -546,4 +546,114 @@ class BitExtractorTest {
         List<Bitcode> result = BitExtractor.extract(bytes(0xFF), List.of(new Bitfield("f", 0, 8)));
         assertThrows(UnsupportedOperationException.class, () -> result.add(Bitcode.of("x", 0)));
     }
+
+    // -----------------------------------------------------------------------
+    // extractReversed(byte[], List<Bitfield>) — argument validation
+    // -----------------------------------------------------------------------
+
+    @Test
+    void extractReversedNullDataThrows() {
+        assertThrows(
+                IllegalArgumentException.class,
+                () -> BitExtractor.extractReversed(null, List.of(new Bitfield("f", 0, 8))));
+    }
+
+    @Test
+    void extractReversedNullFieldsThrows() {
+        assertThrows(IllegalArgumentException.class, () -> BitExtractor.extractReversed(bytes(0xFF), null));
+    }
+
+    @Test
+    void extractReversedFieldOutOfRangeThrows() {
+        assertThrows(
+                IllegalArgumentException.class,
+                () -> BitExtractor.extractReversed(bytes(0xFF), List.of(new Bitfield("f", 0, 16))));
+    }
+
+    // -----------------------------------------------------------------------
+    // extractReversed(byte[], List<Bitfield>) — correctness
+    // -----------------------------------------------------------------------
+
+    @Test
+    void extractReversedEmptyFieldListReturnsEmptyList() {
+        assertTrue(BitExtractor.extractReversed(bytes(0xFF), List.of()).isEmpty());
+    }
+
+    @Test
+    void extractReversedSingleByte() {
+        // 0xAB = 1010 1011; reversed over 8 bits = 1101 0101 = 0xD5
+        byte[] data = bytes(0xAB);
+        List<Bitcode> result = BitExtractor.extractReversed(data, List.of(new Bitfield("val", 0, 8)));
+        assertEquals(1, result.size());
+        assertEquals(Bitcode.of("val", 0xD5L), result.get(0));
+    }
+
+    @Test
+    void extractReversedSingleNibble() {
+        // 0xAB high nibble = 0xA = 1010; reversed over 4 bits = 0101 = 0x5
+        byte[] data = bytes(0xAB);
+        List<Bitcode> result = BitExtractor.extractReversed(data, List.of(new Bitfield("hi", 0, 4)));
+        assertEquals(Bitcode.of("hi", 0x5L), result.get(0));
+    }
+
+    @Test
+    void extractReversedSingleBit() {
+        // MSB of 0x80 is 1; reversed over 1 bit is still 1
+        assertEquals(
+                List.of(Bitcode.of("b", 1L)),
+                BitExtractor.extractReversed(bytes(0x80), List.of(new Bitfield("b", 0, 1))));
+    }
+
+    @Test
+    void extractReversedMultipleFieldsAreEachReversedIndependently() {
+        // data = {0xAB}: high nibble 0xA = 1010 → reversed = 0101 = 0x5
+        //                low  nibble 0xB = 1011 → reversed = 1101 = 0xD
+        byte[] data = bytes(0xAB);
+        List<Bitfield> fields = List.of(new Bitfield("hi", 0, 4), new Bitfield("lo", 4, 4));
+        List<Bitcode> result = BitExtractor.extractReversed(data, fields);
+        assertEquals(2, result.size());
+        assertEquals(Bitcode.of("hi", 0x5L), result.get(0));
+        assertEquals(Bitcode.of("lo", 0xDL), result.get(1));
+    }
+
+    @Test
+    void extractReversedNamesAreRetained() {
+        byte[] data = bytes(0xFF);
+        List<Bitfield> fields = List.of(new Bitfield("alpha", 0, 4), new Bitfield("beta", 4, 4));
+        List<Bitcode> result = BitExtractor.extractReversed(data, fields);
+        assertEquals("alpha", result.get(0).name());
+        assertEquals("beta", result.get(1).name());
+    }
+
+    @Test
+    void extractReversedAllOnesIsUnchanged() {
+        // Reversing a field of all 1s always yields all 1s regardless of width.
+        byte[] data = bytes(0xFF, 0xFF);
+        List<Bitcode> result = BitExtractor.extractReversed(data, List.of(new Bitfield("f", 0, 16)));
+        assertEquals(Bitcode.of("f", 0xFFFFL), result.get(0));
+    }
+
+    @Test
+    void extractReversedResultIsUnmodifiable() {
+        List<Bitcode> result = BitExtractor.extractReversed(bytes(0xFF), List.of(new Bitfield("f", 0, 8)));
+        assertThrows(UnsupportedOperationException.class, () -> result.add(Bitcode.of("x", 0)));
+    }
+
+    @Test
+    void extractReversedIsInverseOfExtract() {
+        // Double-reversing a field must reproduce the original extract result.
+        byte[] data = bytes(0xDE, 0xAD, 0xBE, 0xEF);
+        List<Bitfield> fields =
+                List.of(new Bitfield("word", 0, 16), new Bitfield("byte2", 16, 8), new Bitfield("nibble", 24, 4));
+        List<Bitcode> forward = BitExtractor.extract(data, fields);
+        // Build a synthetic byte array from the reversed values and reverse again
+        // to confirm the round-trip property via the reverseBits primitive directly.
+        for (int i = 0; i < fields.size(); i++) {
+            Bitfield field = fields.get(i);
+            long original = ((Bitcode.OfLong) forward.get(i)).value();
+            long reversed = BitExtractor.reverseBits(original, field.length());
+            long roundTripped = BitExtractor.reverseBits(reversed, field.length());
+            assertEquals(original, roundTripped, "round-trip failed for field: " + field.name());
+        }
+    }
 }

@@ -47,6 +47,42 @@ public final class BitExtractor {
     }
 
     /**
+     * Extracts each field in {@code fields} from {@code data}, reverses the bits
+     * of each extracted value within its declared width, and returns the results
+     * as an unmodifiable list of {@link Bitcode} values in the same order.
+     *
+     * <p>This is useful when the bit-stream encodes fields in LSB-first order: the
+     * raw extraction produces the bits in MSB-first order and this method flips
+     * them back so that bit 0 of the field becomes the least-significant bit of
+     * the returned value.
+     *
+     * <p>Each field must satisfy the constraints of {@link #extractBits}: its
+     * {@code length} must be between 1 and 64 and its range must not exceed the
+     * bounds of {@code data}.
+     *
+     * @param data   the source byte array; must not be {@code null}
+     * @param fields the fields to extract; must not be {@code null}
+     * @return an unmodifiable list of bit-reversed {@link Bitcode} values in field order
+     * @throws IllegalArgumentException if {@code data} or {@code fields} is
+     *     {@code null}, or if any field fails the validation in
+     *     {@link #extractBits}
+     */
+    public static List<Bitcode> extractReversed(byte[] data, List<Bitfield> fields) {
+        if (data == null) {
+            throw new IllegalArgumentException("data must not be null");
+        }
+        if (fields == null) {
+            throw new IllegalArgumentException("fields must not be null");
+        }
+        List<Bitcode> result = new ArrayList<>(fields.size());
+        for (Bitfield field : fields) {
+            long raw = extractBits(data, field.startBit(), field.length());
+            result.add(Bitcode.of(field.name(), reverseBits(raw, field.length())));
+        }
+        return List.copyOf(result);
+    }
+
+    /**
      * Extracts {@code length} bits starting at bit offset {@code startBit} from
      * {@code data} and returns them right-aligned in a {@code long}.
      *
