@@ -1,6 +1,8 @@
 package net.aspekt.gateway.util;
 
 import java.math.BigInteger;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Utility class for extracting an arbitrary run of bits from a byte array.
@@ -13,6 +15,36 @@ import java.math.BigInteger;
 public final class BitExtractor {
 
     private BitExtractor() {}
+
+    /**
+     * Extracts each field in {@code fields} from {@code data} and returns the
+     * results as a list of {@link Bitcode} values in the same order, retaining
+     * each field's name.
+     *
+     * <p>Each field must satisfy the constraints of {@link #extractBits}: its
+     * {@code length} must be between 1 and 64 and its range must not exceed the
+     * bounds of {@code data}.
+     *
+     * @param data   the source byte array; must not be {@code null}
+     * @param fields the fields to extract; must not be {@code null}
+     * @return an unmodifiable list of {@link Bitcode} values in field order
+     * @throws IllegalArgumentException if {@code data} or {@code fields} is
+     *     {@code null}, or if any field fails the validation in
+     *     {@link #extractBits}
+     */
+    public static List<Bitcode> extract(byte[] data, List<Bitfield> fields) {
+        if (data == null) {
+            throw new IllegalArgumentException("data must not be null");
+        }
+        if (fields == null) {
+            throw new IllegalArgumentException("fields must not be null");
+        }
+        List<Bitcode> result = new ArrayList<>(fields.size());
+        for (Bitfield field : fields) {
+            result.add(new Bitcode(field.name(), extractBits(data, field.startBit(), field.length())));
+        }
+        return List.copyOf(result);
+    }
 
     /**
      * Extracts {@code length} bits starting at bit offset {@code startBit} from

@@ -3,6 +3,7 @@ package net.aspekt.gateway.util;
 import static org.junit.jupiter.api.Assertions.*;
 
 import java.math.BigInteger;
+import java.util.List;
 import org.junit.jupiter.api.Test;
 
 class BitExtractorTest {
@@ -462,5 +463,87 @@ class BitExtractorTest {
         int n = 100;
         BigInteger mask = BigInteger.ONE.shiftLeft(n).subtract(BigInteger.ONE);
         assertEquals(value.and(mask), BitExtractor.reverseBigBits(BitExtractor.reverseBigBits(value, n), n));
+    }
+
+    // -----------------------------------------------------------------------
+    // extract(byte[], List<Bitfield>) — argument validation
+    // -----------------------------------------------------------------------
+
+    @Test
+    void extractListNullDataThrows() {
+        assertThrows(
+                IllegalArgumentException.class, () -> BitExtractor.extract(null, List.of(new Bitfield("f", 0, 8))));
+    }
+
+    @Test
+    void extractListNullFieldsThrows() {
+        assertThrows(IllegalArgumentException.class, () -> BitExtractor.extract(bytes(0xFF), null));
+    }
+
+    @Test
+    void extractListFieldOutOfRangeThrows() {
+        // 1-byte array; field requests bits 0–15 which exceeds the array.
+        assertThrows(
+                IllegalArgumentException.class,
+                () -> BitExtractor.extract(bytes(0xFF), List.of(new Bitfield("f", 0, 16))));
+    }
+
+    // -----------------------------------------------------------------------
+    // extract(byte[], List<Bitfield>) — correctness
+    // -----------------------------------------------------------------------
+
+    @Test
+    void extractEmptyFieldListReturnsEmptyList() {
+        assertTrue(BitExtractor.extract(bytes(0xFF), List.of()).isEmpty());
+    }
+
+    @Test
+    void extractSingleField() {
+        // 0xAB = 1010 1011; high nibble (bits 0–3) = 0xA, low nibble (bits 4–7) = 0xB
+        byte[] data = bytes(0xAB);
+        List<Bitcode> result = BitExtractor.extract(data, List.of(new Bitfield("high", 0, 4)));
+        assertEquals(1, result.size());
+        assertEquals(new Bitcode("high", 0xAL), result.get(0));
+    }
+
+    @Test
+    void extractMultipleFieldsRetainsOrder() {
+        // data = {0xAB}: split into high nibble "hi" and low nibble "lo"
+        byte[] data = bytes(0xAB);
+        List<Bitfield> fields = List.of(new Bitfield("hi", 0, 4), new Bitfield("lo", 4, 4));
+        List<Bitcode> result = BitExtractor.extract(data, fields);
+        assertEquals(2, result.size());
+        assertEquals(new Bitcode("hi", 0xAL), result.get(0));
+        assertEquals(new Bitcode("lo", 0xBL), result.get(1));
+    }
+
+    @Test
+    void extractFieldsWithDifferentSizes() {
+        // data = {0xDE, 0xAD, 0xBE, 0xEF}
+        // "word"  : bits  0–15 = 0xDEAD
+        // "byte2" : bits 16–23 = 0xBE
+        // "nibble": bits 24–27 = 0xE
+        byte[] data = bytes(0xDE, 0xAD, 0xBE, 0xEF);
+        List<Bitfield> fields =
+                List.of(new Bitfield("word", 0, 16), new Bitfield("byte2", 16, 8), new Bitfield("nibble", 24, 4));
+        List<Bitcode> result = BitExtractor.extract(data, fields);
+        assertEquals(new Bitcode("word", 0xDEADL), result.get(0));
+        assertEquals(new Bitcode("byte2", 0xBEL), result.get(1));
+        assertEquals(new Bitcode("nibble", 0xEL), result.get(2));
+    }
+
+    @Test
+    void extractNamesAreRetained() {
+        byte[] data = bytes(0xFF);
+        List<Bitfield> fields = List.of(new Bitfield("alpha", 0, 4), new Bitfield("beta", 4, 4));
+        List<Bitcode> result = BitExtractor.extract(data, fields);
+        assertEquals("alpha", result.get(0).name());
+        assertEquals("beta", result.get(1).name());
+    }
+
+    @Test
+    void extractResultIsUnmodifiable() {
+        List<Bitcode> result = BitExtractor.extract(bytes(0xFF), List.of(new Bitfield("f", 0, 8)));
+        assertThrows(UnsupportedOperationException.class, () -> result.add(new Bitcode("x", 0)));
     }
 }
