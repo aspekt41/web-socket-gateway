@@ -133,4 +133,31 @@ public final class BitExtractor {
 
         return result;
     }
+
+    /**
+     * Reverses the {@code bitCount} least-significant bits of {@code value} and
+     * returns the result right-aligned in a {@code long}.
+     *
+     * <p>Bits above position {@code bitCount - 1} in {@code value} are ignored.
+     * The returned value has those same bits zeroed.
+     *
+     * <p>Example: {@code reverseBits(0x1A, 4)} — low 4 bits of {@code 0x1A} are
+     * {@code 1010}, reversed to {@code 0101} — returns {@code 0x05}.
+     *
+     * @param value    the source value; only the {@code bitCount} low-order bits are used
+     * @param bitCount the number of significant bits to reverse (1–64)
+     * @return the reversed bits right-aligned in a {@code long}
+     * @throws IllegalArgumentException if {@code bitCount} is less than 1 or greater than 64
+     */
+    public static long reverseBits(long value, int bitCount) {
+        if (bitCount < 1 || bitCount > 64) {
+            throw new IllegalArgumentException("bitCount must be between 1 and 64, got: " + bitCount);
+        }
+        long result = 0L;
+        for (int i = 0; i < bitCount; i++) {
+            result = (result << 1) | (value & 1L);
+            value >>>= 1;
+        }
+        return result;
+    }
 }

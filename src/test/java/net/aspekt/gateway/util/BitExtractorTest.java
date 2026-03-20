@@ -318,4 +318,74 @@ class BitExtractorTest {
         BigInteger expected = BigInteger.ONE.shiftLeft(65).subtract(BigInteger.ONE);
         assertEquals(expected, BitExtractor.extractBigBits(data, 0, 65));
     }
+
+    // -----------------------------------------------------------------------
+    // reverseBits — argument validation
+    // -----------------------------------------------------------------------
+
+    @Test
+    void reverseBitsZeroCountThrows() {
+        assertThrows(IllegalArgumentException.class, () -> BitExtractor.reverseBits(0xFF, 0));
+    }
+
+    @Test
+    void reverseBitsOver64Throws() {
+        assertThrows(IllegalArgumentException.class, () -> BitExtractor.reverseBits(0xFF, 65));
+    }
+
+    // -----------------------------------------------------------------------
+    // reverseBits — correctness
+    // -----------------------------------------------------------------------
+
+    @Test
+    void reverseBitsExampleFromSpec() {
+        // low 4 bits of 0x1A = 1010, reversed = 0101 = 0x05
+        assertEquals(0x05L, BitExtractor.reverseBits(0x1A, 4));
+    }
+
+    @Test
+    void reverseBitsSingleBitIsIdentity() {
+        assertEquals(0L, BitExtractor.reverseBits(0L, 1));
+        assertEquals(1L, BitExtractor.reverseBits(1L, 1));
+    }
+
+    @Test
+    void reverseBitsPalindrome() {
+        // 0b1001 reversed over 4 bits is still 0b1001
+        assertEquals(0b1001L, BitExtractor.reverseBits(0b1001L, 4));
+    }
+
+    @Test
+    void reverseBitsFullByte() {
+        // 0xAB = 1010 1011, reversed = 1101 0101 = 0xD5
+        assertEquals(0xD5L, BitExtractor.reverseBits(0xAB, 8));
+    }
+
+    @Test
+    void reverseBitsIgnoresHighBits() {
+        // High bits of value beyond bitCount must not affect the result.
+        // 0xFF_1A: low 4 bits = 1010, reversed = 0101 = 0x05, same as plain 0x1A.
+        assertEquals(0x05L, BitExtractor.reverseBits(0xFF_1AL, 4));
+    }
+
+    @Test
+    void reverseBits64AllOnes() {
+        // All 64 bits set, reversed = all 64 bits set.
+        assertEquals(0xFFFFFFFFFFFFFFFFL, BitExtractor.reverseBits(0xFFFFFFFFFFFFFFFFL, 64));
+    }
+
+    @Test
+    void reverseBits64KnownPattern() {
+        // 0x8000000000000001L = 1000...0001 (64 bits), reversed = 1000...0001 (palindrome)
+        assertEquals(0x8000000000000001L, BitExtractor.reverseBits(0x8000000000000001L, 64));
+    }
+
+    @Test
+    void reverseBitsIsItsOwnInverse() {
+        // reverseBits(reverseBits(v, n), n) == low n bits of v
+        long value = 0x1234567890ABCDEFL;
+        int n = 40;
+        long mask = (1L << n) - 1;
+        assertEquals(value & mask, BitExtractor.reverseBits(BitExtractor.reverseBits(value, n), n));
+    }
 }
