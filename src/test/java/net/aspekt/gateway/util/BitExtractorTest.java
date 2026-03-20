@@ -1,0 +1,230 @@
+package net.aspekt.gateway.util;
+
+import static org.junit.jupiter.api.Assertions.*;
+
+import org.junit.jupiter.api.Test;
+
+class BitExtractorTest {
+
+    // -----------------------------------------------------------------------
+    // Convenience: build a byte array from an explicit list of int values so
+    // test cases remain readable without repeated (byte) casts.
+    // -----------------------------------------------------------------------
+    private static byte[] bytes(int... values) {
+        byte[] b = new byte[values.length];
+        for (int i = 0; i < values.length; i++) {
+            b[i] = (byte) values[i];
+        }
+        return b;
+    }
+
+    // -----------------------------------------------------------------------
+    // Argument validation
+    // -----------------------------------------------------------------------
+
+    @Test
+    void nullDataThrows() {
+        assertThrows(IllegalArgumentException.class, () -> BitExtractor.extractBits(null, 0, 8));
+    }
+
+    @Test
+    void zeroLengthThrows() {
+        assertThrows(IllegalArgumentException.class, () -> BitExtractor.extractBits(bytes(0xFF), 0, 0));
+    }
+
+    @Test
+    void lengthOver64Throws() {
+        byte[] data = new byte[9];
+        assertThrows(IllegalArgumentException.class, () -> BitExtractor.extractBits(data, 0, 65));
+    }
+
+    @Test
+    void negativeStartBitThrows() {
+        assertThrows(IllegalArgumentException.class, () -> BitExtractor.extractBits(bytes(0xFF), -1, 4));
+    }
+
+    @Test
+    void rangeExceedsArrayThrows() {
+        // 1-byte array has 8 bits; starting at bit 1 and reading 8 bits needs bit 8
+        // which doesn't exist.
+        assertThrows(IllegalArgumentException.class, () -> BitExtractor.extractBits(bytes(0xFF), 1, 8));
+    }
+
+    @Test
+    void startBitAtExactEndThrows() {
+        // Starting at bit 8 of a 1-byte array is already out of range for any length.
+        assertThrows(IllegalArgumentException.class, () -> BitExtractor.extractBits(bytes(0xFF), 8, 1));
+    }
+
+    // -----------------------------------------------------------------------
+    // Byte-aligned reads
+    // -----------------------------------------------------------------------
+
+    @Test
+    void readFullByte() {
+        assertEquals(0xABL, BitExtractor.extractBits(bytes(0xAB), 0, 8));
+    }
+
+    @Test
+    void readSecondFullByte() {
+        assertEquals(0xCDL, BitExtractor.extractBits(bytes(0xAB, 0xCD), 8, 8));
+    }
+
+    @Test
+    void readAllBytesAs64Bits() {
+        // 8 bytes → 64 bits; result must equal the big-endian long.
+        byte[] data = bytes(0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08);
+        long expected = 0x0102030405060708L;
+        assertEquals(expected, BitExtractor.extractBits(data, 0, 64));
+    }
+
+    @Test
+    void readSingleByteLowNibble() {
+        // Bits 4–7 of 0xAB (= 1010 1011) are 1011 = 0xB.
+        assertEquals(0xBL, BitExtractor.extractBits(bytes(0xAB), 4, 4));
+    }
+
+    @Test
+    void readSingleByteHighNibble() {
+        // Bits 0–3 of 0xAB are 1010 = 0xA.
+        assertEquals(0xAL, BitExtractor.extractBits(bytes(0xAB), 0, 4));
+    }
+
+    // -----------------------------------------------------------------------
+    // Single-bit reads
+    // -----------------------------------------------------------------------
+
+    @Test
+    void readSingleBitSetInMSB() {
+        // 0x80 = 1000 0000; bit 0 is 1.
+        assertEquals(1L, BitExtractor.extractBits(bytes(0x80), 0, 1));
+    }
+
+    @Test
+    void readSingleBitClearInMSB() {
+        // 0x7F = 0111 1111; bit 0 is 0.
+        assertEquals(0L, BitExtractor.extractBits(bytes(0x7F), 0, 1));
+    }
+
+    @Test
+    void readSingleBitInLSB() {
+        // 0x01 = 0000 0001; bit 7 (LSB) is 1.
+        assertEquals(1L, BitExtractor.extractBits(bytes(0x01), 7, 1));
+    }
+
+    @Test
+    void readSingleBitAcrossByteInSecondByte() {
+        // data = {0x00, 0x80}: bit 8 is the MSB of the second byte → 1.
+        assertEquals(1L, BitExtractor.extractBits(bytes(0x00, 0x80), 8, 1));
+    }
+
+    // -----------------------------------------------------------------------
+    // Cross-byte reads (not on byte boundaries)
+    // -----------------------------------------------------------------------
+
+    @Test
+    void readCrossByteTwoBitsStraddlingBoundary() {
+        // data = {0x01, 0x80}: bits 7–8 are: (LSB of byte 0)=1, (MSB of byte 1)=1
+        // → binary 11 = 3.
+        assertEquals(3L, BitExtractor.extractBits(bytes(0x01, 0x80), 7, 2));
+    }
+
+    @Test
+    void readCrossThreeBytesUnaligned() {
+        // data = {0xFF, 0x00, 0xFF}
+        // Extract bits 4..19 (16 bits):
+        //   byte 0 bits 4-7 = 0xF  (4 bits)
+        //   byte 1 bits 0-7 = 0x00 (8 bits)
+        //   byte 2 bits 0-3 = 0xF  (4 bits)
+        // Result = 0xF00F.
+        assertEquals(0xF00FL, BitExtractor.extractBits(bytes(0xFF, 0x00, 0xFF), 4, 16));
+    }
+
+    @Test
+    void readUnaligned31Bits() {
+        // Example from the specification: extractBits(data, 2, 31).
+        // data = {0xFF, 0xFF, 0xFF, 0xFF, 0x80}
+        // bit layout across the first 4 bytes (32 bits total):
+        //   1111 1111  1111 1111  1111 1111  1111 1111
+        // Bits 2..32 (31 bits) = 31 ones = 0x7FFFFFFF.
+        byte[] data = bytes(0xFF, 0xFF, 0xFF, 0xFF, 0x80);
+        assertEquals(0x7FFFFFFFL, BitExtractor.extractBits(data, 2, 31));
+    }
+
+    @Test
+    void readUnaligned31BitsWithKnownPattern() {
+        // data bytes (hex): 0x1A 0x2B 0x3C 0x4D 0x5E
+        //   = 0001 1010 | 0010 1011 | 0011 1100 | 0100 1101 | 0101 1110  (40 bits)
+        // startBit=2, length=31 → bits [2..32] inclusive.
+        //   bit2..7  = 011010                       (6 bits from byte 0)
+        //   bit8..15 = 00101011                     (8 bits = byte 1)
+        //   bit16..23 = 00111100                    (8 bits = byte 2)
+        //   bit24..31 = 01001101                    (8 bits = byte 3)
+        //   bit32     = 0                           (1 bit = MSB of byte 4)
+        //   concatenated: 0110 1000 1010 1100 1111 0001 0011 010
+        //   padded to 32: 0011 0100 0101 0110 0111 1000 1001 1010 = 0x3456789A
+        byte[] data = bytes(0x1A, 0x2B, 0x3C, 0x4D, 0x5E);
+        assertEquals(0x3456789AL, BitExtractor.extractBits(data, 2, 31));
+    }
+
+    @Test
+    void readAcrossFourBytesOddStartAndLength() {
+        // data = {0x00, 0xFF, 0xFF, 0x00}
+        // Extract bits 6..21 (16 bits):
+        //   byte 0 bits 6-7: 00 (2 bits)
+        //   byte 1 bits 0-7: 11111111 (8 bits)
+        //   byte 2 bits 0-5: 111111 (6 bits)
+        //   result = 00_11111111_111111 = 0b0011111111111111 = 0x3FFF
+        assertEquals(0x3FFFL, BitExtractor.extractBits(bytes(0x00, 0xFF, 0xFF, 0x00), 6, 16));
+    }
+
+    @Test
+    void readLastBitOfArray() {
+        // 2-byte array; bit 15 is the LSB of the second byte.
+        // 0x01 = 0000 0001; LSB is 1.
+        assertEquals(1L, BitExtractor.extractBits(bytes(0x00, 0x01), 15, 1));
+    }
+
+    @Test
+    void readMaxLength64BitsFromLargerArray() {
+        // Extract 64 bits starting at bit 8 (= byte 1 through byte 8).
+        byte[] data = bytes(0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x00);
+        long expected = 0x0102030405060708L;
+        assertEquals(expected, BitExtractor.extractBits(data, 8, 64));
+    }
+
+    @Test
+    void readUnalignedStartIn64BitExtraction() {
+        // data = {0xFF, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x80}
+        // Extract 64 bits starting at bit 1:
+        //   byte 0 bits 1-7: 1111111 (7 bits) → occupies bits 63..57 of result
+        //   bytes 1-7: all zeros (56 bits)    → bits 56..1 of result = 0
+        //   byte 8 bit 0 (MSB of 0x80): 1    → bit 0 of result = 1
+        //   result = 1111 1110 0000...0001 = 0xFE00000000000001L
+        byte[] data = bytes(0xFF, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x80);
+        assertEquals(0xFE00000000000001L, BitExtractor.extractBits(data, 1, 64));
+    }
+
+    @Test
+    void readHighBitPatternPreservesSignlessness() {
+        // The MSB of the returned long will be 1; ensure we don't sign-extend.
+        // data = {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF}; read all 64 bits.
+        byte[] data = bytes(0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF);
+        assertEquals(0xFFFFFFFFFFFFFFFFL, BitExtractor.extractBits(data, 0, 64));
+    }
+
+    @Test
+    void readSingleBitLength1FromOddOffset() {
+        // data = {0b00010000} = 0x10; bit 3 = 1.
+        assertEquals(1L, BitExtractor.extractBits(bytes(0x10), 3, 1));
+        // bit 4 = 0
+        assertEquals(0L, BitExtractor.extractBits(bytes(0x10), 4, 1));
+    }
+
+    @Test
+    void readBitsExactlyAtArrayBoundary() {
+        // 3-byte array; read all 24 bits starting at 0.
+        byte[] data = bytes(0xDE, 0xAD, 0xBE);
+        assertEquals(0xDEADBEL, BitExtractor.extractBits(data, 0, 24));
+    }
+}
