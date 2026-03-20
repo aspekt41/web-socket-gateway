@@ -160,4 +160,35 @@ public final class BitExtractor {
         }
         return result;
     }
+
+    /**
+     * Reverses the {@code bitCount} least-significant bits of {@code value} and
+     * returns the result right-aligned in a {@link BigInteger}.
+     *
+     * <p>Use this method when {@code bitCount} may exceed 64. For reversals of 64
+     * bits or fewer, prefer {@link #reverseBits(long, int)} which is faster.
+     *
+     * @param value    the source value; must not be {@code null} or negative
+     * @param bitCount the number of significant bits to reverse (1 or more)
+     * @return the reversed bits as a non-negative {@link BigInteger}
+     * @throws IllegalArgumentException if {@code value} is {@code null} or negative,
+     *     or {@code bitCount} is less than 1
+     */
+    public static BigInteger reverseBigBits(BigInteger value, int bitCount) {
+        if (value == null) {
+            throw new IllegalArgumentException("value must not be null");
+        }
+        if (value.signum() < 0) {
+            throw new IllegalArgumentException("value must not be negative");
+        }
+        if (bitCount < 1) {
+            throw new IllegalArgumentException("bitCount must be at least 1, got: " + bitCount);
+        }
+        BigInteger result = BigInteger.ZERO;
+        for (int i = 0; i < bitCount; i++) {
+            result = result.shiftLeft(1).or(value.and(BigInteger.ONE));
+            value = value.shiftRight(1);
+        }
+        return result;
+    }
 }

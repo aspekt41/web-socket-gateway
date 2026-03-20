@@ -388,4 +388,79 @@ class BitExtractorTest {
         long mask = (1L << n) - 1;
         assertEquals(value & mask, BitExtractor.reverseBits(BitExtractor.reverseBits(value, n), n));
     }
+
+    // -----------------------------------------------------------------------
+    // reverseBigBits — argument validation
+    // -----------------------------------------------------------------------
+
+    @Test
+    void reverseBigBitsNullThrows() {
+        assertThrows(IllegalArgumentException.class, () -> BitExtractor.reverseBigBits(null, 4));
+    }
+
+    @Test
+    void reverseBigBitsNegativeValueThrows() {
+        assertThrows(IllegalArgumentException.class, () -> BitExtractor.reverseBigBits(BigInteger.valueOf(-1), 4));
+    }
+
+    @Test
+    void reverseBigBitsZeroCountThrows() {
+        assertThrows(IllegalArgumentException.class, () -> BitExtractor.reverseBigBits(BigInteger.ONE, 0));
+    }
+
+    // -----------------------------------------------------------------------
+    // reverseBigBits — parity with reverseBits for ≤64-bit cases
+    // -----------------------------------------------------------------------
+
+    @Test
+    void reverseBigBitsExampleFromSpec() {
+        // low 4 bits of 0x1A = 1010, reversed = 0101 = 0x05
+        assertEquals(BigInteger.valueOf(0x05L), BitExtractor.reverseBigBits(BigInteger.valueOf(0x1A), 4));
+    }
+
+    @Test
+    void reverseBigBitsFullByte() {
+        // 0xAB = 1010 1011, reversed over 8 bits = 1101 0101 = 0xD5
+        assertEquals(BigInteger.valueOf(0xD5L), BitExtractor.reverseBigBits(BigInteger.valueOf(0xAB), 8));
+    }
+
+    @Test
+    void reverseBigBitsIgnoresHighBits() {
+        assertEquals(BigInteger.valueOf(0x05L), BitExtractor.reverseBigBits(BigInteger.valueOf(0xFF_1AL), 4));
+    }
+
+    // -----------------------------------------------------------------------
+    // reverseBigBits — >64-bit cases
+    // -----------------------------------------------------------------------
+
+    @Test
+    void reverseBigBits72Bits() {
+        // 72-bit value: 0x800000000000000001 (bit 72 and bit 0 set)
+        // reversed over 72 bits = same value (palindrome)
+        BigInteger value = BigInteger.ONE.shiftLeft(71).or(BigInteger.ONE);
+        assertEquals(value, BitExtractor.reverseBigBits(value, 72));
+    }
+
+    @Test
+    void reverseBigBits128AllOnes() {
+        // All 128 bits set, reversed = all 128 bits set.
+        BigInteger allOnes = BigInteger.ONE.shiftLeft(128).subtract(BigInteger.ONE);
+        assertEquals(allOnes, BitExtractor.reverseBigBits(allOnes, 128));
+    }
+
+    @Test
+    void reverseBigBits128KnownPattern() {
+        // 128-bit value with only the MSB set: 1 followed by 127 zeros.
+        // Reversed over 128 bits = only the LSB set.
+        BigInteger msb = BigInteger.ONE.shiftLeft(127);
+        assertEquals(BigInteger.ONE, BitExtractor.reverseBigBits(msb, 128));
+    }
+
+    @Test
+    void reverseBigBitsIsItsOwnInverse() {
+        BigInteger value = new BigInteger("0102030405060708090A0B0C0D0E0F", 16);
+        int n = 100;
+        BigInteger mask = BigInteger.ONE.shiftLeft(n).subtract(BigInteger.ONE);
+        assertEquals(value.and(mask), BitExtractor.reverseBigBits(BitExtractor.reverseBigBits(value, n), n));
+    }
 }
